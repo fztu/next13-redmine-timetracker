@@ -15,9 +15,9 @@ const routes = [
         color: "text-sky-500"
     },
     {
-        label: "Connections",
+        label: "Manage Redmine Accounts",
         icon: Settings,
-        href: "/settings"
+        href: "/connections"
     }
 ];
 
