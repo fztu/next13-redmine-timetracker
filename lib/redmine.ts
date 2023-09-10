@@ -13,7 +13,7 @@ export type RedmineApiOptions = {
 }
 
 export type RedmineResponse = {
-    data: RedmineUser | [],
+    data: RedmineUser | {},
     status: RedmineStatusResponse
 }
 

@@ -60,7 +60,6 @@ const RedmineConnectionForm = () => {
                 values
             );
             console.log(response.data);
-            setIsLoading(false);
             if (response?.data?.status?.hasError === false) {
                 toast({
                     title: "Connection Saved",
@@ -83,6 +82,7 @@ const RedmineConnectionForm = () => {
             });
             console.log(error);
         } finally {
+            setIsLoading(false);
             router.refresh()
         }
     }
@@ -98,7 +98,6 @@ const RedmineConnectionForm = () => {
                 values
             );
             console.log(response.data);
-            setIsLoading(false);
             if (response?.data?.status?.hasError === false) {
                 toast({
                     title: "Test Connection Sucess",
@@ -120,6 +119,7 @@ const RedmineConnectionForm = () => {
             });
             console.log(error);
         } finally {
+            setIsLoading(false);
             router.refresh()
         }
     }
