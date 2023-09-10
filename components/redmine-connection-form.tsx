@@ -51,17 +51,40 @@ const RedmineConnectionForm = () => {
 
     // 2. Define a submit handler.
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        // ✅ This will be type-safe and validated.
-        console.log("Submit the form");
-        console.log(values);
-        setIsLoading(true);
-        const response = await axios.post(
-            '/api/redmine/testconn',
-            values
-        );
-        console.log(response.data);
-        setIsLoading(false);
-
+        try {
+            console.log("Connect and save Redmine Connection");
+            console.log(values);
+            setIsLoading(true);
+            const response = await axios.post(
+                '/api/redmine/saveconn',
+                values
+            );
+            console.log(response.data);
+            setIsLoading(false);
+            if (response?.data?.status?.hasError === false) {
+                toast({
+                    title: "Connection Saved",
+                    description: "Redmine connection tested and saved successfully.",
+                });
+                form.reset();
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Failed",
+                    description: "Failed to connect to Redmine and save",
+                })
+            }
+            
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Failed",
+                description: "Something went wrong",
+            });
+            console.log(error);
+        } finally {
+            router.refresh()
+        }
     }
 
     // Define a Test Connection handler.
@@ -99,7 +122,6 @@ const RedmineConnectionForm = () => {
         } finally {
             router.refresh()
         }
-
     }
 
     return (
