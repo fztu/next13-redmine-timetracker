@@ -10,14 +10,17 @@ datasource db {
 
 model UserRedmineConnection {
   id String @id @default(cuid())
-  userId String @unique
+  userId String
   name String 
   url String 
   username String
   password String
   apiKey String
+  maxProjectLevels Int @default(2)
+  projects String @db.Text
   status Int @default(1)
   deleted Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@unique([userId, url, deleted])
 }
