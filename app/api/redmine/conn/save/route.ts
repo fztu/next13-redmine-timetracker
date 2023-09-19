@@ -12,7 +12,8 @@ export async function POST(
         try {
             const { userId } = auth();
             const body = await req.json();
-            const { name, url, apikey } = body;
+            console.log(body);
+            const { id, name, url, apikey } = body;
 
             if (!userId) {
                 return new NextResponse("Unauthorized", { status: 401 });
@@ -25,6 +26,14 @@ export async function POST(
                     deleted: 0
                 }
             });
+
+            if (id) {
+                const userRedmineConnection = await prismadb.userRedmineConnection.findUnique({
+                    where: {
+                        id: id
+                    }
+                });
+            }
 
             console.log(userRedmineConnection);
 
