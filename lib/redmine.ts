@@ -12,7 +12,7 @@ export type RedmineApiOptions = {
     password?: string
 }
 
-export type RedmineResponse = {
+export type RedmineUserResponse = {
     data: RedmineUser | {},
     status: RedmineStatusResponse
 }
@@ -35,6 +35,30 @@ export type RedmineUser = {
     api_key: string
     status: number
     custom_fields: RedmineCustomField[]
+}
+
+export type RedmineProjectResponse = {
+    data: RedmineProject[] | [],
+    status: RedmineStatusResponse
+}
+
+export interface RedmineProject {
+    id: number
+    name: string
+    identifier: string
+    description: string
+    parent?: {
+        id: number
+        name: string
+    }
+    children?: {
+        id: number
+        name: string
+    }[]
+    status: number
+    custom_fields: RedmineCustomField[]
+    created_on: string
+    updated_on: string
 }
 
 export type RedmineCustomField = {
@@ -105,7 +129,7 @@ export class RedmineApi {
     async request(
         method: string,
         path: string,
-        params: []
+        params: {}
     ): Promise<any> {
         const isUpload = path === '/uploads.json'
         const opts: AxiosRequestConfig = {
@@ -130,8 +154,8 @@ export class RedmineApi {
     }
 
     async current_user(
-        params: []
-    ): Promise<RedmineResponse> {
+        params: {}
+    ): Promise<RedmineUserResponse> {
         try {
             const res = await this.request("GET", "/users/current.json", params);
             return {
@@ -142,14 +166,40 @@ export class RedmineApi {
                     errorText: "",
                     hasError: false
                 }
-            } as RedmineResponse;
+            } as RedmineUserResponse;
         } catch (err) {
             return {
                 data: [],
                 status: this._errorHandler(err)
-            } as RedmineResponse;
+            } as RedmineUserResponse;
         }
+    }
 
+    // REST API for Projects (Stable)
+    /**
+     * Listing projects
+     * http://www.redmine.org/projects/redmine/wiki/Rest_Projects#Listing-projects
+     */
+    async projects(
+        params: {}
+    ): Promise<RedmineProjectResponse> {
+        try {
+            const res = await this.request("GET", "/projects.json", params);
+            return {
+                data: res?.data?.projects ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as RedmineProjectResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as RedmineProjectResponse;
+        }
     }
 
     protected _errorHandler(

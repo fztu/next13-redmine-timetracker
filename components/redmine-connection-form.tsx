@@ -32,6 +32,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { 
+    Tooltip, 
+    TooltipContent, 
+    TooltipProvider, 
+    TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 const formSchema = z.object({
     id: z.string(),
@@ -55,10 +61,10 @@ interface RedmineConnectionFormProps {
 const RedmineConnectionForm = ({
     userRedmineConnection
 }: RedmineConnectionFormProps) => {
-    const router = useRouter();
     const { mutate } = useSWRConfig()
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [open, setOpen] = useState<boolean>(false);
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -105,7 +111,6 @@ const RedmineConnectionForm = ({
             console.log(error);
         } finally {
             setIsLoading(false);
-            router.refresh()
             // tell all SWRs with this key to revalidate
             mutate('/api/redmine/conn')
         }
@@ -144,7 +149,6 @@ const RedmineConnectionForm = ({
             console.log(error);
         } finally {
             setIsLoading(false);
-            router.refresh()
         }
     }
 
@@ -181,9 +185,47 @@ const RedmineConnectionForm = ({
             console.log(error);
         } finally {
             setIsLoading(false);
-            router.refresh()
             // tell all SWRs with this key to revalidate
             mutate('/api/redmine/conn')
+        }
+    }
+
+
+    // Define a Test Connection handler.
+    const onRefreshProjects = async (values: z.infer<typeof formSchema>) => {
+        try {
+            console.log("Refresh projects");
+            console.log(values);
+            setIsLoading(true);
+            const response = await axios.get(
+                `/api/redmine/conn/${values.id}/projects`
+            );
+            console.log(response.data);
+            if (response?.data?.length > 0) {
+                toast({
+                    title: "Projects Refreshed Sucess",
+                    description: "Redmine projects refreshed successfully.",
+                })
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Failed to refresh projects",
+                    description: "Failed to refresh projects",
+                })
+            }
+
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Failed to refresh projects",
+                description: "Something went wrong",
+            });
+            console.log(error);
+        } finally {
+            setIsLoading(false);
+            // tell all SWRs with this key to revalidate
+            mutate('/api/redmine/conn')
+            setOpen(false)
         }
     }
 
@@ -240,7 +282,7 @@ const RedmineConnectionForm = ({
                             </FormControl>
                             <FormMessage />
                             {!userRedmineConnection?.id &&
-                                <FormDescription className="text-red-700 italic">
+                                <FormDescription className="text-violet-900 italic text-xs">
                                     This can be found from My Account page after you login your Redmine account.
                                 </FormDescription>
                             }
@@ -249,7 +291,7 @@ const RedmineConnectionForm = ({
                 />
                 <section className="w-full flex flex-row space-x-6">
                     {userRedmineConnection?.id &&
-                        <AlertDialog>
+                        <AlertDialog open={open} onOpenChange={setOpen} >
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive" disabled={isLoading}>Delete</Button>
                             </AlertDialogTrigger>
@@ -305,6 +347,34 @@ const RedmineConnectionForm = ({
                                 <p className="text-sm font-medium leading-none">Email:</p>
                             </div>
                             <div className="ml-auto font-medium">{userRedmineConnection?.redmineEmail}</div>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">Assigned Projects:</p>
+                            </div>
+                            <div className="ml-auto pr-8 font-medium">{
+                                userRedmineConnection?.projects ?
+                                    JSON.parse(userRedmineConnection?.projects).length :
+                                    0
+                            }</div>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="default"
+                                            type="button"
+                                            className="w-1/8"
+                                            disabled={isLoading}
+                                            onClick={form.handleSubmit(onRefreshProjects)}
+                                        >
+                                            Refresh Projects
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>It can take 1-2 mins depends on <br/> how many projects you are assigned.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                     </div>
                 }

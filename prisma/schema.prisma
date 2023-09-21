@@ -23,7 +23,7 @@ model UserRedmineConnection {
   redmineCreatedOn DateTime @default("1970-01-01T00:00:00.000Z")
   redmineLastLoginOn DateTime @default("1970-01-01T00:00:00.000Z")
   maxProjectLevels Int @default(2)
-  projects String @db.Text
+  projects String @db.LongText
   status Int @default(1)
   deleted Int @default(0)
   createdAt DateTime @default(now())

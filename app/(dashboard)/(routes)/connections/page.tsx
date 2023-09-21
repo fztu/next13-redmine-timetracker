@@ -56,15 +56,7 @@ const ConnectionsPage = () => {
 
   return (
     <div className="hidden items-start justify-center gap-2 rounded-lg p-2 md:grid lg:grid-cols-2 xl:grid-cols-3">
-      <Card className="bg-blue-100">
-        <CardHeader>
-          <CardTitle>Connect to new Redmine account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RedmineConnectionForm />
-        </CardContent>
-      </Card>
-      {redmineConnections.map((userRedmineConnection: UserRedmineConnection) => (
+      {redmineConnections?.map((userRedmineConnection: UserRedmineConnection) => (
         <Card className="bg-green-300">
           <CardHeader>
             <CardTitle>{userRedmineConnection?.name ?? "Redmine Connection"}</CardTitle>
@@ -76,8 +68,15 @@ const ConnectionsPage = () => {
           </CardContent>
         </Card>
       ))
-
       }
+      <Card className="bg-blue-100">
+        <CardHeader>
+          <CardTitle>Connect to new Redmine account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RedmineConnectionForm />
+        </CardContent>
+      </Card>
     </div>
   )
 }
