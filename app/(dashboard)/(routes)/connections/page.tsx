@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react'
 import axios from 'axios'
 import useSWR from 'swr'
+import { useUser } from "@clerk/nextjs";
 
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -20,8 +17,9 @@ import { UserRedmineConnection } from '@prisma/client';
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const ConnectionsPage = () => {
+  const { isSignedIn, user, isLoaded } = useUser();
   const { data: redmineConnections, isLoading, isValidating, error } = useSWR(
-    '/api/redmine/conn',
+    '/api/redmine/conn?userId=' + user?.id ?? "",
     fetcher,
     {
       revalidateOnFocus: false,
@@ -29,8 +27,6 @@ const ConnectionsPage = () => {
       revalidateOnReconnect: false,
     }
   );
-  console.log(redmineConnections);
-  console.log(error);
 
   // If it's still loading the initial data, there is nothing to display.
   // We return a skeleton here.
@@ -55,9 +51,9 @@ const ConnectionsPage = () => {
   }
 
   return (
-    <div className="hidden items-start justify-center gap-2 rounded-lg p-2 md:grid lg:grid-cols-2 xl:grid-cols-3">
+    <div className="items-start justify-center gap-2 rounded-lg p-2 md:grid lg:grid-cols-2 xl:grid-cols-3">
       {redmineConnections?.map((userRedmineConnection: UserRedmineConnection) => (
-        <Card className="bg-green-300">
+        <Card>
           <CardHeader>
             <CardTitle>{userRedmineConnection?.name ?? "Redmine Connection"}</CardTitle>
           </CardHeader>
@@ -69,7 +65,7 @@ const ConnectionsPage = () => {
         </Card>
       ))
       }
-      <Card className="bg-blue-100">
+      <Card className="bg-slate-100">
         <CardHeader>
           <CardTitle>Connect to new Redmine account</CardTitle>
         </CardHeader>

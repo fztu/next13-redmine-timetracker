@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs';
 
-import type { RedmineApiOptions, RedmineUser } from "@/lib/redmine"
+import type { 
+    RedmineApiOptions, 
+    User as RedmineUser 
+} from "@/lib/redmine"
 import { RedmineApi } from "@/lib/redmine"
 import prismadb from '@/lib/prismadb';
 

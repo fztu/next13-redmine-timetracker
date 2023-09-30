@@ -12,19 +12,19 @@ export type RedmineApiOptions = {
     password?: string
 }
 
-export type RedmineUserResponse = {
-    data: RedmineUser | {},
-    status: RedmineStatusResponse
+export type UserResponse = {
+    data: User | {},
+    status: StatusResponse
 }
 
-export type RedmineStatusResponse = {
+export type StatusResponse = {
     statusCode: number
     statusText: string
     errorText: string
     hasError: boolean
 };
 
-export type RedmineUser = {
+export type User = {
     id: number
     login: string
     firstname: string
@@ -34,15 +34,15 @@ export type RedmineUser = {
     last_login_on: string
     api_key: string
     status: number
-    custom_fields: RedmineCustomField[]
+    custom_fields: CustomField[]
 }
 
-export type RedmineProjectResponse = {
-    data: RedmineProject[] | [],
-    status: RedmineStatusResponse
+export type ProjectResponse = {
+    data: Project[] | [],
+    status: StatusResponse
 }
 
-export interface RedmineProject {
+export interface Project {
     id: number
     name: string
     identifier: string
@@ -56,15 +56,25 @@ export interface RedmineProject {
         name: string
     }[]
     status: number
-    custom_fields: RedmineCustomField[]
+    custom_fields: CustomField[]
     created_on: string
     updated_on: string
 }
 
-export type RedmineCustomField = {
+export type CustomField = {
     id: number
     name: string
     value?: string
+}
+
+export type TimeEntryActivityResponse = {
+    data: TimeEntryActivity[] | [],
+    status: StatusResponse
+}
+
+export interface TimeEntryActivity {
+    id: number
+    name: string
 }
 
 export class RedmineApi {
@@ -155,7 +165,7 @@ export class RedmineApi {
 
     async current_user(
         params: {}
-    ): Promise<RedmineUserResponse> {
+    ): Promise<UserResponse> {
         try {
             const res = await this.request("GET", "/users/current.json", params);
             return {
@@ -166,12 +176,12 @@ export class RedmineApi {
                     errorText: "",
                     hasError: false
                 }
-            } as RedmineUserResponse;
+            } as UserResponse;
         } catch (err) {
             return {
                 data: [],
                 status: this._errorHandler(err)
-            } as RedmineUserResponse;
+            } as UserResponse;
         }
     }
 
@@ -182,7 +192,7 @@ export class RedmineApi {
      */
     async projects(
         params: {}
-    ): Promise<RedmineProjectResponse> {
+    ): Promise<ProjectResponse> {
         try {
             const res = await this.request("GET", "/projects.json", params);
             return {
@@ -193,18 +203,40 @@ export class RedmineApi {
                     errorText: "",
                     hasError: false
                 }
-            } as RedmineProjectResponse;
+            } as ProjectResponse;
         } catch (err) {
             return {
                 data: [],
                 status: this._errorHandler(err)
-            } as RedmineProjectResponse;
+            } as ProjectResponse;
+        }
+    }
+
+    async activities(
+        params: {}
+    ): Promise<TimeEntryActivityResponse> {
+        try {
+            const res = await this.request("GET", "/enumerations/time_entry_activities.json", params);
+            return {
+                data: res?.data?.time_entry_activities ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as TimeEntryActivityResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as TimeEntryActivityResponse;
         }
     }
 
     protected _errorHandler(
         err: any
-    ): RedmineStatusResponse {
+    ): StatusResponse {
         console.error(err);
         if (axios.isAxiosError(err) && err.response) {
             return {
@@ -212,14 +244,14 @@ export class RedmineApi {
                 statusText: err.response?.statusText,
                 errorText: err.response?.data,
                 hasError: true
-            } as RedmineStatusResponse;
+            } as StatusResponse;
         } else {
             return {
                 statusCode: 500,
                 statusText: "Internal Server Error",
                 errorText: "Internal server error (Redmine)",
                 hasError: true
-            } as RedmineStatusResponse;
+            } as StatusResponse;
         }
     }
 

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import axios from "axios";
 import { useSWRConfig } from 'swr'
-import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 import type { UserRedmineConnection } from '@prisma/client'
 import {
@@ -32,11 +32,11 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { 
-    Tooltip, 
-    TooltipContent, 
-    TooltipProvider, 
-    TooltipTrigger 
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
 } from "@/components/ui/tooltip";
 
 const formSchema = z.object({
@@ -65,6 +65,7 @@ const RedmineConnectionForm = ({
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [open, setOpen] = useState<boolean>(false);
+    const { isSignedIn, user, isLoaded } = useUser();
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -112,7 +113,7 @@ const RedmineConnectionForm = ({
         } finally {
             setIsLoading(false);
             // tell all SWRs with this key to revalidate
-            mutate('/api/redmine/conn')
+            mutate('/api/redmine/conn?userId=' + user?.id ?? "")
         }
     }
 
@@ -186,10 +187,9 @@ const RedmineConnectionForm = ({
         } finally {
             setIsLoading(false);
             // tell all SWRs with this key to revalidate
-            mutate('/api/redmine/conn')
+            mutate('/api/redmine/conn?userId=' + user?.id ?? "")
         }
     }
-
 
     // Define a Test Connection handler.
     const onRefreshProjects = async (values: z.infer<typeof formSchema>) => {
@@ -224,14 +224,65 @@ const RedmineConnectionForm = ({
         } finally {
             setIsLoading(false);
             // tell all SWRs with this key to revalidate
-            mutate('/api/redmine/conn')
+            mutate('/api/redmine/conn?userId=' + user?.id ?? "")
             setOpen(false)
         }
     }
 
     return (
         <Form {...form}>
+
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {userRedmineConnection?.id &&
+                    <div className="space-y-2">
+                        <div className="flex items-center">
+                            <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">Name:</p>
+                            </div>
+                            <div className="ml-auto font-medium">{userRedmineConnection?.firstname} {userRedmineConnection?.lastname}</div>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">Login:</p>
+                            </div>
+                            <div className="ml-auto font-medium">{userRedmineConnection?.username}</div>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">Email:</p>
+                            </div>
+                            <div className="ml-auto font-medium">{userRedmineConnection?.redmineEmail}</div>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">Assigned Projects:</p>
+                            </div>
+                            <div className="ml-auto pr-8 font-bold">{
+                                userRedmineConnection?.projects ?
+                                    JSON.parse(userRedmineConnection?.projects).length :
+                                    0
+                            }</div>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="default"
+                                            type="button"
+                                            className="w-1/8"
+                                            disabled={isLoading}
+                                            onClick={form.handleSubmit(onRefreshProjects)}
+                                        >
+                                            Refresh Projects
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>It can take 1-2 mins depends on <br /> how many projects you are assigned.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                }
                 <FormField
                     control={form.control}
                     name="id"
@@ -252,7 +303,11 @@ const RedmineConnectionForm = ({
                         <FormItem>
                             <FormLabel>Connection Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="Connection 123" {...field} />
+                                <Input 
+                                    // readOnly={userRedmineConnection?.id ? true : false} 
+                                    // className={userRedmineConnection?.id ? "bg-gray-50" : ""}
+                                    placeholder="Connection 123" {...field} 
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -265,7 +320,11 @@ const RedmineConnectionForm = ({
                         <FormItem>
                             <FormLabel>Redmine URL</FormLabel>
                             <FormControl>
-                                <Input placeholder="https://redmine.silksoftware.com" {...field} />
+                                <Input 
+                                    readOnly={userRedmineConnection?.id ? true : false} 
+                                    className={userRedmineConnection?.id ? "bg-gray-50" : ""}
+                                    placeholder="https://redmine.silksoftware.com" {...field} 
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -328,56 +387,6 @@ const RedmineConnectionForm = ({
                         Save
                     </Button>
                 </section>
-                {userRedmineConnection?.id &&
-                    <div className="space-y-2">
-                        <div className="flex items-center">
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">Name:</p>
-                            </div>
-                            <div className="ml-auto font-medium">{userRedmineConnection?.firstname} {userRedmineConnection?.lastname}</div>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">Login:</p>
-                            </div>
-                            <div className="ml-auto font-medium">{userRedmineConnection?.username}</div>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">Email:</p>
-                            </div>
-                            <div className="ml-auto font-medium">{userRedmineConnection?.redmineEmail}</div>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">Assigned Projects:</p>
-                            </div>
-                            <div className="ml-auto pr-8 font-medium">{
-                                userRedmineConnection?.projects ?
-                                    JSON.parse(userRedmineConnection?.projects).length :
-                                    0
-                            }</div>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="default"
-                                            type="button"
-                                            className="w-1/8"
-                                            disabled={isLoading}
-                                            onClick={form.handleSubmit(onRefreshProjects)}
-                                        >
-                                            Refresh Projects
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>It can take 1-2 mins depends on <br/> how many projects you are assigned.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    </div>
-                }
             </form>
         </Form>
     );
