@@ -20,6 +20,7 @@ import {
 import { FormControl } from "@/components/ui/form"
 
 import { cn } from "@/lib/utils"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface DropdownPopoverProps {
     field: any,
@@ -27,16 +28,16 @@ interface DropdownPopoverProps {
         id: string,
         name: string
     }[],
-    onSelectFunc: (value: string) => void 
+    onSelectFunc: (value: string) => void
 }
 
 const DropdownPopover = ({
     field,
     options,
     onSelectFunc
-}: DropdownPopoverProps ) => {
+}: DropdownPopoverProps) => {
     const [open, setOpen] = React.useState(false)
-    
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -62,28 +63,30 @@ const DropdownPopover = ({
                 <Command>
                     <CommandInput placeholder="Search options..." />
                     <CommandEmpty>No option found.</CommandEmpty>
-                    <CommandGroup>
-                        {options?.map((option) => (
-                            <CommandItem
-                                value={option.name}
-                                key={option.id}
-                                onSelect={ (currentValue) => {
-                                    onSelectFunc(currentValue); 
-                                    setOpen(false)
-                                }}
-                            >
-                                <Check
-                                    className={cn(
-                                        "mr-2 h-4 w-4",
-                                        option?.id.toString() === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                    )}
-                                />
-                                {option.name}
-                            </CommandItem>
-                        ))}
-                    </CommandGroup>
+                    <ScrollArea className='overflow-auto max-h-screen'>
+                        <CommandGroup>
+                            {options?.map((option) => (
+                                <CommandItem
+                                    value={option.name}
+                                    key={option.id}
+                                    onSelect={(currentValue) => {
+                                        onSelectFunc(currentValue);
+                                        setOpen(false)
+                                    }}
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            option?.id.toString() === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                        )}
+                                    />
+                                    {option.name}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </ScrollArea>
                 </Command>
             </PopoverContent>
         </Popover>

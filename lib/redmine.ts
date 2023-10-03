@@ -77,6 +77,45 @@ export interface TimeEntryActivity {
     name: string
 }
 
+export interface TimeEntryRequest {
+    project_id?: number
+    issue_id?: number
+    spent_on: string
+    hours: number
+    activity_id: number
+    comments: string
+    user_id: number
+}
+
+export type TimeEntryResponse = {
+    data: TimeEntry[] | [],
+    status: StatusResponse
+}
+
+export interface TimeEntry {
+    id: number
+    project: {
+        id: number
+        name: string
+    }
+    issue?: {
+        id: number
+    }
+    user: {
+        id: number
+        name: string
+    }
+    activity: {
+        id: number
+        name: string
+    }
+    hours: number
+    comments: string
+    spent_on: string
+    created_on: string
+    updated_on: string
+}
+
 export class RedmineApi {
     protected _host: string
     protected _authType: string
@@ -163,6 +202,10 @@ export class RedmineApi {
         return this._instance(path, opts)
     }
 
+    /**
+     * Returns current user details
+     * http://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
+     */
     async current_user(
         params: {}
     ): Promise<UserResponse> {
@@ -212,6 +255,10 @@ export class RedmineApi {
         }
     }
 
+    /**
+     * Returns the list of time entry activities.
+     * http://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-2
+     */
     async activities(
         params: {}
     ): Promise<TimeEntryActivityResponse> {
@@ -233,6 +280,113 @@ export class RedmineApi {
             } as TimeEntryActivityResponse;
         }
     }
+
+    // REST API for Time Entries (Stable)
+    /**
+     * Listing time entries
+     * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Listing-time-entries
+     */
+    async time_entries(
+        params: {}
+    ): Promise<TimeEntryResponse> {
+        try {
+            const res = await this.request("GET", "/time_entries.json", params);
+            return {
+                data: res?.data?.time_entries ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as TimeEntryResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as TimeEntryResponse;
+        }
+    }
+
+    /**
+     * Creating a time entry
+     * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Creating-a-time-entry
+     */
+    async create_time_entry (
+        params: {}
+    ): Promise<TimeEntryResponse> {
+        try {
+            const res = await this.request("POST", "/time_entries.json", params);
+            return {
+                data: res?.data?.time_entries ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as TimeEntryResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as TimeEntryResponse;
+        }
+    }
+
+    /**
+     * Updating a time entry
+     * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Updating-a-time-entry
+     */
+    async update_time_entry (
+        id: number,
+        params: {}
+    ): Promise<TimeEntryResponse> {
+        try {
+            const res = await this.request("PUT", `/time_entries/${id}.json`, params);
+            return {
+                data: res?.data?.time_entries ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as TimeEntryResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as TimeEntryResponse;
+        }
+    }
+
+    /**
+     * Deleting a time entry
+     * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Deleting-a-time-entry
+     */
+    async delete_time_entry (
+        id: number
+    ): Promise<TimeEntryResponse> {
+        try {
+            const res = await this.request("DELETE", `/time_entries/${id}.json`, {});
+            return {
+                data: res?.data?.time_entries ?? [],
+                status: {
+                    statusCode: res?.status,
+                    statusText: res?.statusText,
+                    errorText: "",
+                    hasError: false
+                }
+            } as TimeEntryResponse;
+        } catch (err) {
+            return {
+                data: [],
+                status: this._errorHandler(err)
+            } as TimeEntryResponse;
+        }
+    }
+
 
     protected _errorHandler(
         err: any

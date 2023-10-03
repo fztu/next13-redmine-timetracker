@@ -29,22 +29,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-} from "@/components/ui/command"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
-
+import { toast, useToast } from "@/components/ui/use-toast"
 import {
     Popover,
     PopoverContent,
@@ -54,18 +39,22 @@ import {
 import DropdownPopover from "@/components/dropdown-popover"
 
 const formSchema = z.object({
-    id: z.number().optional(),
+    id: z.string().optional(),
     comments: z.string().nonempty({
         message: "Comments is required"
     }),
     hours: z.coerce.number().gt(0),
-    connection_id: z.string().optional(),
+    connection_id: z.string(),
     project_id: z.string().optional(),
     sub_project_id: z.string().optional(),
-    ticket: z.coerce.string().optional(),
-    activity_id: z.string().optional(),
+    issue_id: z.coerce.string().optional(),
+    activity_id: z.string(),
     spent_on: z.date()
-});
+})
+.refine(({ project_id, sub_project_id, issue_id }) =>
+    project_id !== "" || sub_project_id !== "" || issue_id !== "",
+    { message: "Either project, sub project, or ticket must be defined" }
+);
 
 interface TimeEntryFormProps {
     userRedmineConnections?: UserRedmineConnection[]
@@ -106,13 +95,13 @@ const TimeEntryForm = ({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            id: 0,
+            id: "",
             comments: "",
             hours: 0,
             connection_id: "",
             project_id: "",
             sub_project_id: "",
-            ticket: "",
+            issue_id: "",
             activity_id: "",
             spent_on: new Date()
         }
@@ -124,6 +113,24 @@ const TimeEntryForm = ({
             console.log("Submit time entry");
             console.log(values);
             setIsLoading(true);
+            const connectionId = values?.connection_id;
+            const response = await axios.post(
+                `/api/redmine/conn/${connectionId}/time_entries`,
+                values
+            );
+            console.log(response.data);
+            if (response?.data?.status?.hasError === false) {
+                toast({
+                    title: "Time Entry Submitted",
+                    description: "Time entry submitted successfully.",
+                });
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Failed",
+                    description: "Failed to submit the time entry",
+                })
+            }
         } catch (error: any) {
             console.log(error);
         } finally {
@@ -279,7 +286,7 @@ const TimeEntryForm = ({
                 {(!isActivitiesLoading && timeEntryActivityOptions) &&
                     <FormField
                         control={form.control}
-                        name="ticket"
+                        name="issue_id"
                         render={({ field }) => (
                             <FormItem className="grid grid-cols-5 items-center justify-center pr-0">
                                 <FormLabel className="items-start col-span-1">Ticket</FormLabel>
