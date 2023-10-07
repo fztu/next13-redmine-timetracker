@@ -10,7 +10,7 @@ import prismadb from '@/lib/prismadb';
 
 export async function DELETE(
     req: NextRequest,
-    { params }
+    { params }: any
 ) {
     if (req.method === 'DELETE') {
         try {

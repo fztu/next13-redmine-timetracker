@@ -8,6 +8,7 @@ import { addDays } from 'date-fns';
 
 import { UserRedmineConnection } from "@prisma/client"
 import { Loader2 } from 'lucide-react';
+import { TimeEntry } from '@/lib/redmine';
 
 interface HoursSummaryProps {
     date: DateRange | undefined,
@@ -64,7 +65,7 @@ const HoursSummary = ({
                 <div className="ml-auto mt-0 font-medium text-red-800">Failed to load</div>
             }
             { (data != undefined) &&
-                <div className="ml-auto mt-0 font-medium">{data.reduce((a, {hours}) => a + hours, 0)}</div>
+                <div className="ml-auto mt-0 font-medium">{data.reduce((a: number, {hours}: {hours: number}) => a + hours, 0)}</div>
             }
         </div>
     )

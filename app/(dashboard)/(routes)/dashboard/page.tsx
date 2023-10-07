@@ -20,7 +20,6 @@ import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { UserRedmineConnection } from '@prisma/client';
 import HoursSummary from '@/components/hours-summary';
-import { TableDemo } from '@/components/demo-table';
 import { DataTableDemo } from '@/components/data-table-demo';
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
@@ -135,6 +134,7 @@ const DashboardPage = () => {
                                 <CardContent className="p-4 pt-0">
                                     {redmineConnections?.map((conn: UserRedmineConnection) => (
                                         <HoursSummary 
+                                            key={conn.id}
                                             date={date}
                                             redmineConnection={conn}
                                         />

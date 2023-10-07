@@ -10,7 +10,7 @@ import prismadb from '@/lib/prismadb';
 
 export async function GET(
     req: NextRequest,
-    { params }
+    { params }: any
 ) {
     try {
         const { userId } = auth();

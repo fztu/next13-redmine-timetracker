@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { ControllerRenderProps } from "react-hook-form"
 import { Check, ChevronsUpDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -25,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 interface DropdownPopoverProps {
     field: any,
     options: {
-        id: string,
+        id: string | number,
         name: string
     }[],
     onSelectFunc: (value: string) => void

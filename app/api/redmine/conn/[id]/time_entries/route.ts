@@ -14,7 +14,7 @@ import prismadb from '@/lib/prismadb';
 
 export async function GET(
     req: NextRequest,
-    { params }
+    { params }: any
 ) {
     try {
         const { userId } = auth();
@@ -97,7 +97,7 @@ export async function GET(
 
 export async function POST(
     req: NextRequest,
-    { params }
+    { params }: any
 ) {
     if (req.method === 'POST') {
         try {

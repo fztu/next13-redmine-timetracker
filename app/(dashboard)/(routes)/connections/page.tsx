@@ -53,7 +53,7 @@ const ConnectionsPage = () => {
   return (
     <div className="items-start justify-center gap-2 rounded-lg p-2 md:grid lg:grid-cols-2 xl:grid-cols-3">
       {redmineConnections?.map((userRedmineConnection: UserRedmineConnection) => (
-        <Card>
+        <Card key={userRedmineConnection.id}>
           <CardHeader className="p-4">
             <CardTitle>{userRedmineConnection?.name ?? "Redmine Connection"}</CardTitle>
           </CardHeader>
@@ -65,7 +65,7 @@ const ConnectionsPage = () => {
         </Card>
       ))
       }
-      <Card className="bg-slate-100">
+      <Card key="new-redmine-connection" className="bg-slate-100">
         <CardHeader className="p-4">
           <CardTitle>Connect to new Redmine account</CardTitle>
         </CardHeader>

@@ -258,7 +258,7 @@ const TimeEntryForm = ({
                                 <FormLabel className="items-start col-span-1 after:content-['*'] after:text-red-600">Project</FormLabel>
                                 <DropdownPopover
                                     field={field}
-                                    options={projectOptions}
+                                    options={projectOptions.map(({id, name}) => ({id, name}))}
                                     onSelectFunc={onProjectChange}
                                 />
                                 <FormMessage />
