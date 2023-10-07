@@ -36,15 +36,24 @@ export async function GET(
             return new NextResponse("Redmine connection is not found", { status: 400 });
         }
 
-        const redmine_user_id = params?.redmine_user_id ?? userRedmineConnection.redmineUserId;
+        const url = new URL(req.url)
+        const redmine_user_id = url.searchParams.get("redmine_user_id") ?? userRedmineConnection.redmineUserId;
         
         if (!redmine_user_id) {
             return new NextResponse("Redmine user id is empty", { status: 400 });
         }
 
-        let timeEntryParams = { ...params}
-        timeEntryParams.user_id = redmine_user_id
+        let timeEntryRequestParams = { ...params}
+        timeEntryRequestParams.user_id = redmine_user_id
 
+        const timeEntryParams: string[] = ["from", "to", "project_id", "offset", "limit"];
+
+        timeEntryParams.map((param: string) => {
+            if (url.searchParams.get(param)) {
+                timeEntryRequestParams[param] = url.searchParams.get(param)
+            }
+        })
+        console.log(timeEntryRequestParams)
         const ops: RedmineApiOptions = {
             host: userRedmineConnection?.url,
             authType: "apikey",
@@ -52,10 +61,33 @@ export async function GET(
         }
         const redmine = new RedmineApi(ops);
         
-        let timeEntries: TimeEntry[] = []
-        let timeEntriesResponse = await redmine.time_entries(timeEntryParams);
-        timeEntries = [...timeEntriesResponse.data]
-        return NextResponse.json(timeEntries);
+        let allTimeEntries: TimeEntry[] = []
+        if (url.searchParams.get("offset") != undefined && url.searchParams.get("limit") !=undefined) {
+            // Only retrieve specific page data
+            let timeEntriesResponse = await redmine.time_entries(timeEntryRequestParams);
+            allTimeEntries = [...timeEntriesResponse.data]
+        } else {
+            // Retrieve all data
+            let offset = url.searchParams.get("offset") ?? 0
+            let limit = url.searchParams.get("limit") ?? 25
+            timeEntryRequestParams["offset"] = offset
+            timeEntryRequestParams["limit"] = limit
+            let timeEntriesResponse = await redmine.time_entries(timeEntryRequestParams);
+            if (timeEntriesResponse.data && timeEntriesResponse.data.length > 0) {
+                allTimeEntries = [...timeEntriesResponse.data]
+                while (timeEntriesResponse.data.length > 0) {
+                    timeEntryRequestParams["offset"] += limit
+                    timeEntriesResponse = await redmine.time_entries(timeEntryRequestParams);
+                    if (timeEntriesResponse.data && timeEntriesResponse.data.length > 0) {
+                        allTimeEntries = [...allTimeEntries, ...timeEntriesResponse.data]
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return NextResponse.json(allTimeEntries);
 
     } catch (err: any) {
         console.error(err);

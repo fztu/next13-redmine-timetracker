@@ -20,6 +20,8 @@ import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { UserRedmineConnection } from '@prisma/client';
 import HoursSummary from '@/components/hours-summary';
+import { TableDemo } from '@/components/demo-table';
+import { DataTableDemo } from '@/components/data-table-demo';
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
@@ -45,23 +47,6 @@ const DashboardPage = () => {
             revalidateOnReconnect: false,
         }
     );
-
-    const {
-        data: timeEntries,
-        isLoading: isTimeEntriesLoading,
-        isValidating: isTimeEntriesValidating,
-        error: timeEntriesError
-    } = useSWR(
-        '/api/redmine/conn/clmtryjnj0002lyzw8q6cm8ti/time_entries?userId=' + user?.id ?? "",
-        fetcher,
-        {
-            revalidateOnFocus: false,
-            revalidateIfStale: false,
-            revalidateOnReconnect: false,
-        }
-    );
-
-    console.log(timeEntries);
 
     const handleDateRefresh = () => {
         setDate(calendarDate);
@@ -138,23 +123,27 @@ const DashboardPage = () => {
                             </CardContent>
                         </Card>
                         {(redmineConnections?.length > 0) &&
-                            <Card className="h-fit">
+                            <Card className="h-fit col-span-1">
                                 <CardHeader className="p-4">
                                     <CardTitle>Hours Summary</CardTitle>
                                     {(date) && 
                                         <CardDescription>
-                                            xxx.xx hours from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
                                         </CardDescription>
                                     }
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
                                     {redmineConnections?.map((conn: UserRedmineConnection) => (
-                                        <HoursSummary />
+                                        <HoursSummary 
+                                            date={date}
+                                            redmineConnection={conn}
+                                        />
                                     ))}
                                 </CardContent>
                             </Card>
                         }
                     </div>
+                    <DataTableDemo />
                 </div>
             </div>
 
