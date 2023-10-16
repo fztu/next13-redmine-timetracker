@@ -20,17 +20,20 @@ import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { UserRedmineConnection } from '@prisma/client';
 import HoursSummary from '@/components/hours-summary';
-import { DataTableDemo } from '@/components/data-table-demo';
+import TimeEntriesTable from '@/components/time-entries-table';
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const DashboardPage = () => {
     const { isSignedIn, user, isLoaded } = useUser();
     const [calendarDate, setCalendarDate] = useState<DateRange | undefined>({
-        from: addDays(new Date(), -7),
+        from: addDays(new Date(), -28),
         to: new Date(),
     })
-    const [date, setDate] = useState<DateRange | undefined>()
+    const [date, setDate] = useState<DateRange | undefined>({
+        from: addDays(new Date(), -28),
+        to: new Date(),
+    })
 
     const {
         data: redmineConnections,
@@ -109,18 +112,6 @@ const DashboardPage = () => {
                         </div>
                     </div>
                     <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
-                        <Card className="col-span-2">
-                            <CardHeader className="p-4">
-                                <CardTitle>
-                                    Time Tracker
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="w-full p-4 pt-0">
-                                <TimeEntryForm
-                                    userRedmineConnections={redmineConnections}
-                                />
-                            </CardContent>
-                        </Card>
                         {(redmineConnections?.length > 0) &&
                             <Card className="h-fit col-span-1">
                                 <CardHeader className="p-4">
@@ -142,8 +133,26 @@ const DashboardPage = () => {
                                 </CardContent>
                             </Card>
                         }
+                        <Card className="col-span-2">
+                            <CardHeader className="p-4">
+                                <CardTitle>
+                                    Time Tracker
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="w-full p-4 pt-0">
+                                <TimeEntryForm
+                                    userRedmineConnections={redmineConnections}
+                                />
+                            </CardContent>
+                        </Card>
                     </div>
-                    <DataTableDemo />
+                    {redmineConnections?.map((conn: UserRedmineConnection) => (
+                        <TimeEntriesTable 
+                            key={conn.id}
+                            date={date}
+                            redmineConnection={conn}
+                        />
+                    ))}
                 </div>
             </div>
 
