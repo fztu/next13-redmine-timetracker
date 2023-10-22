@@ -1,7 +1,7 @@
 "use client";
 
 import axios from 'axios'
-import useSWR from 'swr'
+import { useSWRConfig } from 'swr'
 import { useUser } from "@clerk/nextjs";
 import { DateRange } from "react-day-picker"
 import { addDays } from 'date-fns';
@@ -28,10 +28,16 @@ import { TimeEntry } from '@/lib/redmine';
 
 import { TimeEntryTableColumns } from '@/components/time-entries-table-columns'
 import { DataTablePagination } from './datatable-pagination';
+import { Button } from './ui/button';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import TimeEntryForm from './time-entry-form';
 
 interface TimeEntriesTableProps {
     date: DateRange | undefined,
-    redmineConnection: UserRedmineConnection
+    redmineConnections: UserRedmineConnection[],
+    redmineConnection: UserRedmineConnection,
+    timeEntries: TimeEntry[] | undefined,
+    isTimeEntriesLoading: Boolean
 }
 
 interface TableMeta<TData extends RowData> {
@@ -42,38 +48,16 @@ const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const TimeEntriesTable = ({
     date,
-    redmineConnection
+    redmineConnections,
+    redmineConnection,
+    timeEntries,
+    isTimeEntriesLoading
 }: TimeEntriesTableProps) => {
-    const { isSignedIn, user, isLoaded } = useUser();
-
-    const params = {
-        "userId": user?.id ?? "",
-        "from": date?.from ? date.from.toISOString().split('T')[0] : addDays(new Date(), -7).toISOString().split('T')[0],
-        "to": date?.to ? date.to.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-    }
-
-    const usp = new URLSearchParams(params);
-    usp.sort();
-    const qs = usp.toString();
-
-    const {
-        data,
-        isLoading,
-        isValidating,
-        error
-    } = useSWR<TimeEntry[]>(
-        `/api/redmine/conn/${redmineConnection?.id}/time_entries?${qs}`,
-        fetcher,
-        {
-            revalidateOnFocus: false,
-            revalidateIfStale: false,
-            revalidateOnReconnect: false,
-        }
-    );
-
-    console.log(data);
+    // const { cache, mutate, ...extraConfig } = useSWRConfig()
+    // console.log(cache);
+    const data = timeEntries == undefined ? [] : timeEntries;
     const table = useReactTable({
-        data: data as TimeEntry[],
+        data: data,
         columns: TimeEntryTableColumns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -81,14 +65,37 @@ const TimeEntriesTable = ({
             redmineConnection: redmineConnection
         } as TableMeta<TimeEntry>
     })
-    console.log(table)
+    // console.log(table)
     return (
         <div className="rounded-md border">
-            <h2 className="text-2xl font-bold tracking-tight pt-2 pl-2">{redmineConnection.name} Time Entries</h2>
-            <p className="text-muted-foreground pl-2">
-                Time entries from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
-            </p>
-            { (table == undefined || data == undefined) &&
+            <div className="flex items-center p-2 w-full">
+                <div className="ml-0 font-medium">
+                    <h2 className="text-2xl font-bold tracking-tight pt-2 pl-2">{redmineConnection.name} Time Entries</h2>
+                    <p className="text-muted-foreground pl-2">
+                        Time entries from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                    </p>
+                </div>
+
+                <Sheet>
+                    <SheetTrigger className="ml-auto">
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className="ml-auto text-white bg-green-500 hover:bg-green-700 hover:text-white"
+                        >
+                            Add
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="p-2 pt-4 min-w-fit">
+                        <TimeEntryForm
+                            date={date}
+                            userRedmineConnections={redmineConnections}
+                            redmineConnection={redmineConnection}
+                        />
+                    </SheetContent>
+                </Sheet>
+            </div>
+            {(table == undefined || data == undefined) &&
                 <div className="border border-blue-300 shadow rounded-md p-4 w-full mx-auto">
                     <div className="animate-pulse flex space-x-4">
                         <div className="rounded-full bg-slate-200 h-10 w-10"></div>
@@ -143,7 +150,7 @@ const TimeEntriesTable = ({
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={TimeEntryTableColumns.length} className="h-24 text-center">
-                                        No results.
+                                        {isTimeEntriesLoading ? "Loading..." : "No result."}
                                     </TableCell>
                                 </TableRow>
                             )}

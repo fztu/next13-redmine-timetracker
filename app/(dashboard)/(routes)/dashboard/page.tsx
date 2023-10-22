@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import axios from 'axios'
 import useSWR from 'swr'
@@ -15,14 +15,31 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import TimeEntryForm from '@/components/time-entry-form';
 import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
-import { UserRedmineConnection } from '@prisma/client';
-import HoursSummary from '@/components/hours-summary';
 import TimeEntriesTable from '@/components/time-entries-table';
 
+import { TTimeEntries } from "@/types/index"
+import { UserRedmineConnection } from '@prisma/client';
+import HoursPerConnection from '@/components/hours-per-connection';
+import useTimeEntriesRequest from '@/hooks/useTimeEntriesRequest';
+import HoursPerWeek from '@/components/hours-per-week';
+import HoursPerDate from '@/components/hours-per-date';
+import HoursPerProject from '@/components/hours-per-project';
+
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
+
+const fetchTimeEntriesWithConnection = (params: { url: string, connections: UserRedmineConnection[] }) => {
+    const url = params.url
+    const connections = params.connections
+    const f = (url: string, conn: UserRedmineConnection) => {
+        const connectionId = conn.id
+        const newUrl = url.replace('CONNECTIONID', connectionId);
+        return axios.get(newUrl)
+            .then((res) => ({ connectionId: connectionId, data: res.data } as TTimeEntries));
+    }
+    return Promise.all(connections.map(conn => f(url, conn)))
+}
 
 const DashboardPage = () => {
     const { isSignedIn, user, isLoaded } = useUser();
@@ -40,7 +57,7 @@ const DashboardPage = () => {
         isLoading: isRedmineConnectionsLoading,
         isValidating: isRedmineConnectionsValidating,
         error: redmineConnectionsError
-    } = useSWR(
+    } = useSWR<UserRedmineConnection[]>(
         '/api/redmine/conn?userId=' + user?.id ?? "",
         fetcher,
         {
@@ -49,6 +66,17 @@ const DashboardPage = () => {
             revalidateOnReconnect: false,
         }
     );
+
+    const {
+        data: timeEntries,
+        isLoading: isTimeEntriesLoading,
+        isValidating: isTimeEntriesValdating,
+        error: timeEntriesLoadError,
+        mutate: mutateTimeEntries
+    } = useTimeEntriesRequest(date, redmineConnections)
+
+    // console.log(redmineConnections)
+    // console.log(timeEntries)
 
     const handleDateRefresh = () => {
         setDate(calendarDate);
@@ -111,48 +139,96 @@ const DashboardPage = () => {
                             </Button>
                         </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
-                        {(redmineConnections?.length > 0) &&
-                            <Card className="h-fit col-span-1">
-                                <CardHeader className="p-4">
-                                    <CardTitle>Hours Summary</CardTitle>
-                                    {(date) && 
-                                        <CardDescription>
-                                            Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
-                                        </CardDescription>
-                                    }
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0">
-                                    {redmineConnections?.map((conn: UserRedmineConnection) => (
-                                        <HoursSummary 
-                                            key={conn.id}
-                                            date={date}
-                                            redmineConnection={conn}
-                                        />
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        }
-                        <Card className="col-span-2">
-                            <CardHeader className="p-4">
-                                <CardTitle>
-                                    Time Tracker
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="w-full p-4 pt-0">
-                                <TimeEntryForm
-                                    userRedmineConnections={redmineConnections}
-                                />
-                            </CardContent>
-                        </Card>
-                    </div>
-                    {redmineConnections?.map((conn: UserRedmineConnection) => (
-                        <TimeEntriesTable 
-                            key={conn.id}
+                    {redmineConnections?.map((conn: UserRedmineConnection) => {
+                        const connectionId = conn.id;
+                        let connTimeEntries = timeEntries?.filter(obj => {
+                            return obj?.connectionId == connectionId
+                        });
+                        return (<TimeEntriesTable
+                            key={connectionId}
                             date={date}
+                            redmineConnections={redmineConnections}
                             redmineConnection={conn}
-                        />
-                    ))}
+                            timeEntries={connTimeEntries && connTimeEntries?.length > 0 ? connTimeEntries[0].data : []}
+                            isTimeEntriesLoading={isTimeEntriesLoading}
+                        />)
+                    })}
+                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
+                        {(redmineConnections != undefined && redmineConnections?.length > 0) &&
+                            <>
+                                <Card className="h-fit col-span-1">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per week</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerWeek
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                                <Card className="h-fit col-span-3">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per day</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerDate
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </>
+                        }
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
+                        {(redmineConnections != undefined && redmineConnections?.length > 0) &&
+                            <>
+                                <Card className="h-fit col-span-1">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per Redmine</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerConnection
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                                <Card className="h-fit col-span-3">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per project</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerProject
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </>
+                        }
+                    </div>
                 </div>
             </div>
 

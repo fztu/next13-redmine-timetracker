@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ControllerRenderProps, useForm } from "react-hook-form";
 import { format } from "date-fns"
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import axios from "axios";
 import useSWR from 'swr'
+import { useSWRConfig } from 'swr'
 import { useUser } from "@clerk/nextjs";
 
 import type { UserRedmineConnection } from '@prisma/client'
@@ -37,6 +38,8 @@ import {
 } from "@/components/ui/popover";
 
 import DropdownPopover from "@/components/dropdown-popover"
+import { DateRange } from "react-day-picker";
+import useTimeEntriesRequest from "@/hooks/useTimeEntriesRequest";
 
 const formSchema = z.object({
     id: z.string().optional(),
@@ -57,19 +60,33 @@ const formSchema = z.object({
 );
 
 interface TimeEntryFormProps {
-    userRedmineConnections?: UserRedmineConnection[]
+    date?: DateRange | undefined,
+    userRedmineConnections?: UserRedmineConnection[],
+    redmineConnection?: UserRedmineConnection
 }
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const TimeEntryForm = ({
-    userRedmineConnections
+    date,
+    userRedmineConnections,
+    redmineConnection
 }: TimeEntryFormProps) => {
+    // const { mutate } = useSWRConfig()
     const { isSignedIn, user, isLoaded } = useUser();
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [connectionId, setConnectionId] = useState<string>("")
+    const [connectionId, setConnectionId] = useState<string>(redmineConnection ? redmineConnection.id : "")
     const [projectOptions, setProjectOptions] = useState<Array<RedmineProject>>([])
     const [subProjectOptions, setSubProjectOptions] = useState<Array<{ id: number, name: string }>>([])
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const {
+        data: timeEntries,
+        isLoading: isTimeEntriesLoading,
+        isValidating: isTimeEntriesValdating,
+        error: timeEntriesLoadError,
+        mutate: mutateTimeEntries
+    } = useTimeEntriesRequest(date, userRedmineConnections)
 
     const redmineConnectionOptions = userRedmineConnections ? userRedmineConnections.map(item => ({
         id: item.id,
@@ -86,6 +103,12 @@ const TimeEntryForm = ({
         }
     );
 
+    useEffect(() => {
+        if (redmineConnection) {
+            setProjectOptions(JSON.parse(redmineConnection.projects))
+        }
+    }, [redmineConnection]);
+
     const activityOptons = timeEntryActivityOptions ? timeEntryActivityOptions.map(item => ({
         id: item.id.toString(),
         name: item.name
@@ -98,7 +121,7 @@ const TimeEntryForm = ({
             id: "",
             comments: "",
             hours: 0,
-            connection_id: "",
+            connection_id: redmineConnection ? redmineConnection.id : "",
             project_id: "",
             sub_project_id: "",
             issue_id: "",
@@ -111,14 +134,14 @@ const TimeEntryForm = ({
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             console.log("Submit time entry");
-            console.log(values);
+            // console.log(values);
             setIsLoading(true);
             const connectionId = values?.connection_id;
             const response = await axios.post(
                 `/api/redmine/conn/${connectionId}/time_entries`,
                 values
             );
-            console.log(response.data);
+            // console.log(response.data);
             if (response?.data?.status?.hasError === false) {
                 toast({
                     title: "Time Entry Submitted",
@@ -131,6 +154,8 @@ const TimeEntryForm = ({
                     description: "Failed to submit the time entry",
                 })
             }
+            // tell all SWRs with this key to revalidate
+            mutateTimeEntries()
         } catch (error: any) {
             console.log(error);
         } finally {
@@ -153,12 +178,12 @@ const TimeEntryForm = ({
 
     // Define on Redmine connection change handler
     const onRedmineConnectionChange = async (value: string) => {
-        console.log(value);
+        // console.log(value);
         setProjectOptions([])
         setSubProjectOptions([])
         const matchedConnections = userRedmineConnections?.filter(c => c.name.toLowerCase() === value);
         const selectedConnection = matchedConnections?.at(0);
-        console.log(selectedConnection);
+        // console.log(selectedConnection);
         if (selectedConnection) {
             setProjectOptions(JSON.parse(selectedConnection.projects))
             setConnectionId(selectedConnection.id)
@@ -168,11 +193,11 @@ const TimeEntryForm = ({
 
     // Define on Redmine project change handler
     const onProjectChange = async (value: string) => {
-        console.log(value);
+        // console.log(value);
         setSubProjectOptions([])
         const matchedProjects = projectOptions?.filter(c => c.name.toLowerCase() === value);
         const selectedProject = matchedProjects?.at(0);
-        console.log(selectedProject);
+        // console.log(selectedProject);
         if (selectedProject && selectedProject?.children) {
             setSubProjectOptions(selectedProject?.children)
             form.setValue("project_id", selectedProject?.id.toString())
@@ -181,7 +206,7 @@ const TimeEntryForm = ({
 
     // Define on Redmine sub project change handler
     const onTimeEntryActivityChange = async (value: string) => {
-        console.log(value);
+        // console.log(value);
         const foundOption = activityOptons?.find(
             (option) => option?.name.toLowerCase() === value
         )
@@ -192,9 +217,10 @@ const TimeEntryForm = ({
 
     // Define on Redmine sub project change handler
     const onSubProjectChange = async (value: string) => {
-        console.log(value);
+        // console.log(value);
+        // console.log(subProjectOptions)
         const foundOption = subProjectOptions?.find(
-            (option) => option?.name.toLowerCase() === value
+            (option) => option?.name.toLowerCase().trim() === value.trim()
         )
         if (foundOption) {
             form.setValue("sub_project_id", foundOption.id.toString())
@@ -203,7 +229,7 @@ const TimeEntryForm = ({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-[800px]">
                 <FormField
                     control={form.control}
                     name="id"
@@ -299,7 +325,7 @@ const TimeEntryForm = ({
                                 </FormControl>
                                 <FormMessage />
                                 <FormDescription className="col-span-5">
-                                    <p>This will log the time entry to the ticket and the project association will depend on the ticket.</p>
+                                    This will log the time entry to the ticket and the project association will depend on the ticket.
                                 </FormDescription>
                             </FormItem>
                         )}
@@ -344,39 +370,48 @@ const TimeEntryForm = ({
                     render={({ field }) => (
                         <FormItem className="grid grid-cols-5 items-center justify-center pr-0">
                             <FormLabel className="items-start col-span-1 after:content-['*'] after:text-red-600">Spent On</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-[240px] pl-3 text-left font-normal",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                        >
-                                            {field.value ? (
-                                                format(field.value, "PPP")
-                                            ) : (
-                                                <span>Pick a date</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
+                            <div ref={containerRef} className="col-span-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-[240px] pl-3 text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                )}
+                                            >
+                                                {field.value ? (
+                                                    format(field.value, "PPP")
+                                                ) : (
+                                                    <span>Pick a date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent 
+                                        className="w-auto p-0" 
+                                        align="start" 
+                                        style={{
+                                            width: containerRef.current?.offsetWidth
+                                        }}
+                                        container={containerRef.current}
+                                    >
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <section className="w-full flex flex-row space-x-6">
+                <section className="w-full flex flex-row space-x-6 max-w-xl">
                     <Button
                         variant="outline"
                         type="button"

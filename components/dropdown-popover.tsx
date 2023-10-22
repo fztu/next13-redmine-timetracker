@@ -36,59 +36,68 @@ const DropdownPopover = ({
     onSelectFunc
 }: DropdownPopoverProps) => {
     const [open, setOpen] = React.useState(false)
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <FormControl className="items-end col-span-4 w-full">
-                    <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                            "justify-between h-fit",
-                            !field.value && "text-muted-foreground"
-                        )}
-                    >
-                        {field.value
-                            ? options?.find(
-                                (option) => option?.id.toString() === field.value
-                            )?.name
-                            : "Select an option"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="p-0 col-span-4 w-full">
-                <Command>
-                    <CommandInput placeholder="Search options..." />
-                    <CommandEmpty>No option found.</CommandEmpty>
-                    <ScrollArea className='overflow-auto max-h-screen'>
-                        <CommandGroup>
-                            {options?.map((option) => (
-                                <CommandItem
-                                    value={option.name}
-                                    key={option.id}
-                                    onSelect={(currentValue) => {
-                                        onSelectFunc(currentValue);
-                                        setOpen(false)
-                                    }}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            option?.id.toString() === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                        )}
-                                    />
-                                    {option.name}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </ScrollArea>
-                </Command>
-            </PopoverContent>
-        </Popover>
+        <div ref={containerRef} className="w-full col-span-4">
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <FormControl className="items-end col-span-4 w-full">
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                                "justify-between h-fit",
+                                !field.value && "text-muted-foreground"
+                            )}
+                        >
+                            {field.value
+                                ? options?.find(
+                                    (option) => option?.id.toString() === field.value
+                                )?.name
+                                : "Select an option"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                </PopoverTrigger>
+                <PopoverContent
+                    className="p-0 col-span-4 w-full"
+                    style={{
+                        width: containerRef.current?.offsetWidth
+                    }}
+                    container={containerRef.current}
+                >
+                    <Command>
+                        <CommandInput placeholder="Search options..." />
+                        <CommandEmpty>No option found.</CommandEmpty>
+                        <ScrollArea className='overflow-auto max-h-screen'>
+                            <CommandGroup>
+                                {options?.map((option) => (
+                                    <CommandItem
+                                        value={option.name}
+                                        key={option.id}
+                                        onSelect={(currentValue) => {
+                                            onSelectFunc(currentValue);
+                                            setOpen(false)
+                                        }}
+                                    >
+                                        <Check
+                                            className={cn(
+                                                "mr-2 h-4 w-4",
+                                                option?.id.toString() === field.value
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                            )}
+                                        />
+                                        {option.name}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </ScrollArea>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </div>
     );
 }
 

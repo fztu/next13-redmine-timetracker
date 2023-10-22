@@ -38,7 +38,6 @@ export const TimeEntryTableColumns: ColumnDef<TimeEntry>[] = [
             const project = row.getValue("project") as {id: number, name: string};
             const projectName = project ? project.name : ""
 
-            // Todo: if the project is a sub project, display the parent as well.
             const tableMeta = table.options?.meta as TableMeta<TimeEntry>
             if (tableMeta?.hasOwnProperty("redmineConnection")) {
                 const allProjects = JSON.parse(tableMeta.redmineConnection.projects)
