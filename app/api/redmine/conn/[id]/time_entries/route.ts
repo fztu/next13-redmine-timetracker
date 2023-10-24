@@ -149,11 +149,20 @@ export async function POST(
             } else {
                 timeEntryParams.project_id = projectId
             }
-            const timeEntryResponse = await redmine.create_time_entry({
-                "time_entry" : timeEntryParams
-            })
-            console.log(timeEntryResponse)
-            return NextResponse.json(timeEntryResponse);
+            if (body?.id) {
+                const timeEntryResponse = await redmine.update_time_entry(
+                    parseInt(body.id),
+                    {"time_entry" : timeEntryParams}
+                )
+                console.log(timeEntryResponse)
+                return NextResponse.json(timeEntryResponse);
+            } else {
+                const timeEntryResponse = await redmine.create_time_entry({
+                    "time_entry" : timeEntryParams
+                })
+                console.log(timeEntryResponse)
+                return NextResponse.json(timeEntryResponse);
+            }
         } catch (error: any) {
             console.error(error);
             return new NextResponse("Something is wrong", { status: 500 });

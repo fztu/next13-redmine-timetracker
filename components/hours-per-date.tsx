@@ -14,10 +14,9 @@ const HoursPerDate = ({
     redmineConnections,
     timeEntries
 }: HoursPerDateProps) => {
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
     // Create an array to store the sum of hours for each day as objects
     const sumOfHoursByDayArray: { date: string, hours: number }[] = [];
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     // Iterate through the data and calculate the sum of hours for each connectionId
     if (timeEntries) {
@@ -27,9 +26,11 @@ const HoursPerDate = ({
 
             for (const hourEntry of hoursData) {
                 const spentOnDate = new Date(hourEntry.spent_on);
+                const dayOfWeek = spentOnDate.getDay();
+                const abbreviatedDayName = dayNames[dayOfWeek];
 
                 // Format the date as a string (YYYY-MM-DD)
-                const dayString = spentOnDate.toISOString().split('T')[0];
+                const dayString = spentOnDate.toISOString().split('T')[0] + ` (${abbreviatedDayName})`;
 
                 // Check if the date is already in the array, and if so, update the hours; otherwise, add a new entry
                 const existingDayIndex = sumOfHoursByDayArray.findIndex((item) => item.date === dayString);

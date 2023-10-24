@@ -14,8 +14,6 @@ const HoursPerWeek = ({
     redmineConnections,
     timeEntries
 }: HoursPerWeekProps) => {
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
     // Create an array to store the sum of hours for each week as objects
     const sumOfHoursByWeekArray: { week: string, hours: number }[] = [];
 

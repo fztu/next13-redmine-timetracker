@@ -31,38 +31,65 @@ import { DataTablePagination } from './datatable-pagination';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import TimeEntryForm from './time-entry-form';
+import { useState } from 'react';
+import useTimeEntriesRequest from '@/hooks/useTimeEntriesRequest';
+import { toast } from './ui/use-toast';
 
 interface TimeEntriesTableProps {
     date: DateRange | undefined,
     redmineConnections: UserRedmineConnection[],
     redmineConnection: UserRedmineConnection,
     timeEntries: TimeEntry[] | undefined,
-    isTimeEntriesLoading: Boolean
+    isTimeEntriesLoading: Boolean,
+    mutateTimeEntries: () => void
 }
 
 interface TableMeta<TData extends RowData> {
-    redmineConnection: UserRedmineConnection
+    redmineConnection: UserRedmineConnection,
+    dateRange: DateRange | undefined,
 }
-
-const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const TimeEntriesTable = ({
     date,
     redmineConnections,
     redmineConnection,
     timeEntries,
-    isTimeEntriesLoading
+    isTimeEntriesLoading,
+    mutateTimeEntries
 }: TimeEntriesTableProps) => {
-    // const { cache, mutate, ...extraConfig } = useSWRConfig()
-    // console.log(cache);
     const data = timeEntries == undefined ? [] : timeEntries;
+
     const table = useReactTable({
-        data: data,
+        data,
         columns: TimeEntryTableColumns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         meta: {
-            redmineConnection: redmineConnection
+            redmineConnection: redmineConnection,
+            dateRange: date,
+            removeTimeEntry: async (rowIndex: number) => {
+                console.log(rowIndex);
+                console.log(data);
+                const timeEntry = data[rowIndex];
+                const connectionId = redmineConnection?.id;
+                const response = await axios.delete(
+                    `/api/redmine/conn/${connectionId}/time_entries/${timeEntry.id}`
+                );
+                console.log(response.data);
+                if (response?.data?.status?.hasError === false) {
+                    toast({
+                        title: "Time Entry Deleted",
+                        description: "Time entry deleted successfully.",
+                    });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Failed",
+                        description: "Failed to delete the time entry",
+                    })
+                }
+                mutateTimeEntries()
+            },
         } as TableMeta<TimeEntry>
     })
     // console.log(table)
@@ -82,6 +109,7 @@ const TimeEntriesTable = ({
                             variant="outline"
                             type="button"
                             className="ml-auto text-white bg-green-500 hover:bg-green-700 hover:text-white"
+                            disabled={(isTimeEntriesLoading == undefined || isTimeEntriesLoading) ? true : false}
                         >
                             Add
                         </Button>
@@ -89,7 +117,6 @@ const TimeEntriesTable = ({
                     <SheetContent side="right" className="p-2 pt-4 min-w-fit">
                         <TimeEntryForm
                             date={date}
-                            userRedmineConnections={redmineConnections}
                             redmineConnection={redmineConnection}
                         />
                     </SheetContent>

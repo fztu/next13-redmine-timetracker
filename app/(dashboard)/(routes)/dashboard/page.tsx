@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import axios from 'axios'
-import useSWR from 'swr'
 import Link from 'next/link';
-import { useUser } from "@clerk/nextjs";
-import { addDays, format } from "date-fns"
+import { addDays } from "date-fns"
 
 import {
     Card,
@@ -19,30 +17,18 @@ import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
 import TimeEntriesTable from '@/components/time-entries-table';
 
-import { TTimeEntries } from "@/types/index"
 import { UserRedmineConnection } from '@prisma/client';
 import HoursPerConnection from '@/components/hours-per-connection';
 import useTimeEntriesRequest from '@/hooks/useTimeEntriesRequest';
 import HoursPerWeek from '@/components/hours-per-week';
 import HoursPerDate from '@/components/hours-per-date';
 import HoursPerProject from '@/components/hours-per-project';
-
-const fetcher = (url: string) => axios.get(url).then(res => res.data)
-
-const fetchTimeEntriesWithConnection = (params: { url: string, connections: UserRedmineConnection[] }) => {
-    const url = params.url
-    const connections = params.connections
-    const f = (url: string, conn: UserRedmineConnection) => {
-        const connectionId = conn.id
-        const newUrl = url.replace('CONNECTIONID', connectionId);
-        return axios.get(newUrl)
-            .then((res) => ({ connectionId: connectionId, data: res.data } as TTimeEntries));
-    }
-    return Promise.all(connections.map(conn => f(url, conn)))
-}
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import TimeEntryForm from '@/components/time-entry-form';
+import useRedmineConnectionsRequest from '@/hooks/useRedmineConnectionsRequest';
 
 const DashboardPage = () => {
-    const { isSignedIn, user, isLoaded } = useUser();
+    // const { isSignedIn, user, isLoaded } = useUser();
     const [calendarDate, setCalendarDate] = useState<DateRange | undefined>({
         from: addDays(new Date(), -28),
         to: new Date(),
@@ -56,16 +42,9 @@ const DashboardPage = () => {
         data: redmineConnections,
         isLoading: isRedmineConnectionsLoading,
         isValidating: isRedmineConnectionsValidating,
-        error: redmineConnectionsError
-    } = useSWR<UserRedmineConnection[]>(
-        '/api/redmine/conn?userId=' + user?.id ?? "",
-        fetcher,
-        {
-            revalidateOnFocus: false,
-            revalidateIfStale: false,
-            revalidateOnReconnect: false,
-        }
-    );
+        error: redmineConnectionsError,
+        mutate: mutateRedmineConnections
+    } = useRedmineConnectionsRequest();
 
     const {
         data: timeEntries,
@@ -125,8 +104,8 @@ const DashboardPage = () => {
         <>
             <div className="flex-col md:flex">
                 <div className="flex-1 space-y-4 p-2">
-                    <div className="flex items-center justify-between space-y-2">
-                        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                    <div className="flex items-center justify-between space-y-2 sticky top-0 backdrop-blur bg-white/80">
+                        <h2 className="text-3xl font-bold tracking-tight xs:hidden">Dashboard</h2>
                         <div className="flex items-center space-x-2">
                             <CalendarDateRangePicker
                                 date={calendarDate}
@@ -137,6 +116,22 @@ const DashboardPage = () => {
                             >
                                 Refresh
                             </Button>
+                            <Sheet>
+                                <SheetTrigger className="ml-auto">
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        className="ml-auto text-white bg-green-500 hover:bg-green-700 hover:text-white"
+                                    >
+                                        Log Time
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="right" className="p-2 pt-4 min-w-fit">
+                                    <TimeEntryForm
+                                        date={date}
+                                    />
+                                </SheetContent>
+                            </Sheet>
                         </div>
                     </div>
                     {redmineConnections?.map((conn: UserRedmineConnection) => {
@@ -151,6 +146,7 @@ const DashboardPage = () => {
                             redmineConnection={conn}
                             timeEntries={connTimeEntries && connTimeEntries?.length > 0 ? connTimeEntries[0].data : []}
                             isTimeEntriesLoading={isTimeEntriesLoading}
+                            mutateTimeEntries={mutateTimeEntries}
                         />)
                     })}
                     <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">

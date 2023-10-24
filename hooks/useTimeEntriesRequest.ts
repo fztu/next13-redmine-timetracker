@@ -1,3 +1,5 @@
+"use client"
+
 import useSWR from 'swr'
 import axios from 'axios'
 import { DateRange } from "react-day-picker";
@@ -53,11 +55,11 @@ const useTimeEntriesRequest = (
     );
     console.log(data)
     return ( {
-        data: data,
-        isLoading: isLoading,
-        isValidating: isValidating,
-        error: error,
-        mutate: mutate
+        data,
+        isLoading,
+        isValidating,
+        error,
+        mutate
     } );
 }
  

@@ -1,19 +1,19 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react";
-import { ControllerRenderProps, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { format } from "date-fns"
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import axios from "axios";
 import useSWR from 'swr'
-import { useSWRConfig } from 'swr'
 import { useUser } from "@clerk/nextjs";
 
 import type { UserRedmineConnection } from '@prisma/client'
 import {
     Project as RedmineProject,
+    TimeEntry,
     TimeEntryActivity
 } from "@/lib/redmine";
 
@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input";
-import { toast, useToast } from "@/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import {
     Popover,
     PopoverContent,
@@ -40,6 +40,7 @@ import {
 import DropdownPopover from "@/components/dropdown-popover"
 import { DateRange } from "react-day-picker";
 import useTimeEntriesRequest from "@/hooks/useTimeEntriesRequest";
+import useRedmineConnectionsRequest from "@/hooks/useRedmineConnectionsRequest";
 
 const formSchema = z.object({
     id: z.string().optional(),
@@ -61,24 +62,31 @@ const formSchema = z.object({
 
 interface TimeEntryFormProps {
     date?: DateRange | undefined,
-    userRedmineConnections?: UserRedmineConnection[],
-    redmineConnection?: UserRedmineConnection
+    redmineConnection?: UserRedmineConnection,
+    timeEntry?: TimeEntry
 }
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data)
 
 const TimeEntryForm = ({
     date,
-    userRedmineConnections,
-    redmineConnection
+    redmineConnection,
+    timeEntry
 }: TimeEntryFormProps) => {
-    // const { mutate } = useSWRConfig()
     const { isSignedIn, user, isLoaded } = useUser();
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [connectionId, setConnectionId] = useState<string>(redmineConnection ? redmineConnection.id : "")
     const [projectOptions, setProjectOptions] = useState<Array<RedmineProject>>([])
     const [subProjectOptions, setSubProjectOptions] = useState<Array<{ id: number, name: string }>>([])
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const {
+        data: userRedmineConnections,
+        isLoading: isRedmineConnectionsLoading,
+        isValidating: isRedmineConnectionsValidating,
+        error: redmineConnectionsError,
+        mutate: mutateRedmineConnections
+    } = useRedmineConnectionsRequest();
 
     const {
         data: timeEntries,
@@ -103,16 +111,25 @@ const TimeEntryForm = ({
         }
     );
 
-    useEffect(() => {
-        if (redmineConnection) {
-            setProjectOptions(JSON.parse(redmineConnection.projects))
-        }
-    }, [redmineConnection]);
-
     const activityOptons = timeEntryActivityOptions ? timeEntryActivityOptions.map(item => ({
         id: item.id.toString(),
         name: item.name
     })) : [];
+
+    const findProjectById= function (data: RedmineProject[], targetId: number) {
+        for (const project of data) {
+            if (project.id === targetId) {
+                return project;
+            } else if (project.children !== undefined && project.children.length > 0) {
+                for (const childProject of project.children) {
+                    if (childProject.id === targetId) {
+                        return project;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -130,18 +147,45 @@ const TimeEntryForm = ({
         }
     })
 
+    useEffect(() => {
+        if (redmineConnection) {
+            setProjectOptions(JSON.parse(redmineConnection.projects));
+            form.setValue("connection_id", redmineConnection.id);
+        }
+        if (redmineConnection && timeEntry && form) {
+            console.log(timeEntry);
+            form.setValue("id", timeEntry.id.toString());
+            form.setValue("comments", timeEntry.comments);
+            form.setValue("issue_id", timeEntry.issue?.id.toString());
+            form.setValue("activity_id", timeEntry.activity.id.toString());
+            form.setValue("spent_on", new Date(timeEntry.spent_on + "T" + new Date().toISOString().split('T')[1]));
+            form.setValue("hours", timeEntry.hours);
+            const allProjects = JSON.parse(redmineConnection.projects);
+            const matchedProject = findProjectById(allProjects, timeEntry.project.id)
+            if (matchedProject !== undefined && matchedProject.id !== timeEntry.project.id) {
+                form.setValue("project_id", matchedProject.id.toString());
+                setSubProjectOptions(matchedProject.children ?? [])
+                form.setValue("sub_project_id", timeEntry.project.id.toString());
+                console.log("Sub Project ID: " + timeEntry.project.id.toString())
+            } else {
+                form.setValue("project_id", timeEntry.project.id.toString());
+                form.setValue("sub_project_id", "");
+            }
+        }
+    }, [redmineConnection, timeEntry, form]);
+
     // 2. Define a submit handler.
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             console.log("Submit time entry");
-            // console.log(values);
+            console.log(values);
             setIsLoading(true);
             const connectionId = values?.connection_id;
             const response = await axios.post(
                 `/api/redmine/conn/${connectionId}/time_entries`,
                 values
             );
-            // console.log(response.data);
+            console.log(response.data);
             if (response?.data?.status?.hasError === false) {
                 toast({
                     title: "Time Entry Submitted",
@@ -156,19 +200,6 @@ const TimeEntryForm = ({
             }
             // tell all SWRs with this key to revalidate
             mutateTimeEntries()
-        } catch (error: any) {
-            console.log(error);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    // Define a save draft handler
-    const onSaveDraft = async (values: z.infer<typeof formSchema>) => {
-        try {
-            console.log("Save draft time entry");
-            console.log(values);
-            setIsLoading(true);
         } catch (error: any) {
             console.log(error);
         } finally {
@@ -421,15 +452,6 @@ const TimeEntryForm = ({
                     >
                         Reset
                     </Button>
-                    {/* <Button
-                        variant="secondary"
-                        type="button"
-                        className="w-1/2"
-                        disabled={isLoading}
-                        onClick={form.handleSubmit(onSaveDraft)}
-                    >
-                        Save Draft
-                    </Button> */}
                     <Button
                         variant="default"
                         type="submit"

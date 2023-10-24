@@ -17,8 +17,6 @@ const HoursPerProject = ({
     redmineConnections,
     timeEntries
 }: HoursPerProjectProps) => {
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
     const findProjectById= function (data: RedmineProject[], targetId: number) {
         for (const project of data) {
             if (project.id === targetId) {
@@ -82,16 +80,16 @@ const HoursPerProject = ({
     if (sumOfHoursByProjectArray.length > 0) {
         return (
             <div>
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={400}>
                     <BarChart
                         width={500}
-                        height={300}
+                        height={400}
                         data={sumOfHoursByProjectArray}
                         layout="vertical"
                     >
                         <XAxis type="number" />
                         <YAxis type="category" width={150} fontSize={10} textAnchor="end" dataKey="project"/>
-                        <Bar height={300} label={{ fill: "#ffffff" }} dataKey="hours" fill="#0088FE" />
+                        <Bar height={400} label={{ fill: "#ffffff" }} dataKey="hours" fill="#0088FE" />
                         <Tooltip />
                     </BarChart>
                 </ResponsiveContainer>
