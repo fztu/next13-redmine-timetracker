@@ -57,7 +57,7 @@ export const TimeEntryTableColumns: ColumnDef<TimeEntry>[] = [
 
             const tableMeta = table.options?.meta as TableMeta<TimeEntry>
             if (tableMeta?.hasOwnProperty("redmineConnection")) {
-                const allProjects = JSON.parse(tableMeta.redmineConnection.projects)
+                const allProjects = tableMeta.redmineConnection.projects ? JSON.parse(tableMeta.redmineConnection.projects) : []
                 // console.log(allProjects)
                 const matchedProject = findProjectById(allProjects, project.id)
                 if (matchedProject !== undefined && matchedProject.id !== project.id) {

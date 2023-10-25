@@ -26,7 +26,7 @@ const CalendarDateRangePicker = ({
   setDate
 }: CalendarDateRangePickerProps) => {
 
-  // console.log(date);
+  console.log(date);
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>

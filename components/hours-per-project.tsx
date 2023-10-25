@@ -45,7 +45,7 @@ const HoursPerProject = ({
                 return obj?.id == connectionId
             });
             if (matchedConns) {
-                const allProjects = JSON.parse(matchedConns[0].projects)
+                const allProjects =  matchedConns[0].projects ? JSON.parse(matchedConns[0].projects) : [];
                 for (const hourEntry of hoursData) {
                     let projectName = hourEntry.project.name;
                     const projectId = hourEntry.project.id;

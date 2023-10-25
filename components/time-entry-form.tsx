@@ -1,5 +1,6 @@
 "use client"
 
+import moment from 'moment';
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns"
@@ -53,7 +54,7 @@ const formSchema = z.object({
     sub_project_id: z.string().optional(),
     issue_id: z.coerce.string().optional(),
     activity_id: z.string(),
-    spent_on: z.date()
+    spent_on: z.string()
 })
 .refine(({ project_id, sub_project_id, issue_id }) =>
     project_id !== "" || sub_project_id !== "" || issue_id !== "",
@@ -143,13 +144,13 @@ const TimeEntryForm = ({
             sub_project_id: "",
             issue_id: "",
             activity_id: "",
-            spent_on: new Date()
+            spent_on: moment().toISOString(true).split('T')[0]
         }
     })
 
     useEffect(() => {
         if (redmineConnection) {
-            setProjectOptions(JSON.parse(redmineConnection.projects));
+            setProjectOptions(redmineConnection.projects ? JSON.parse(redmineConnection.projects) : []);
             form.setValue("connection_id", redmineConnection.id);
         }
         if (redmineConnection && timeEntry && form) {
@@ -158,9 +159,9 @@ const TimeEntryForm = ({
             form.setValue("comments", timeEntry.comments);
             form.setValue("issue_id", timeEntry.issue?.id.toString());
             form.setValue("activity_id", timeEntry.activity.id.toString());
-            form.setValue("spent_on", new Date(timeEntry.spent_on + "T" + new Date().toISOString().split('T')[1]));
+            form.setValue("spent_on", moment(timeEntry.spent_on).toISOString(true).split('T')[0])
             form.setValue("hours", timeEntry.hours);
-            const allProjects = JSON.parse(redmineConnection.projects);
+            const allProjects = redmineConnection.projects ? JSON.parse(redmineConnection.projects) : [];
             const matchedProject = findProjectById(allProjects, timeEntry.project.id)
             if (matchedProject !== undefined && matchedProject.id !== timeEntry.project.id) {
                 form.setValue("project_id", matchedProject.id.toString());
@@ -216,7 +217,7 @@ const TimeEntryForm = ({
         const selectedConnection = matchedConnections?.at(0);
         // console.log(selectedConnection);
         if (selectedConnection) {
-            setProjectOptions(JSON.parse(selectedConnection.projects))
+            setProjectOptions(selectedConnection.projects ? JSON.parse(selectedConnection.projects) : [])
             setConnectionId(selectedConnection.id)
             form.setValue("connection_id", selectedConnection.id)
         }
@@ -256,6 +257,13 @@ const TimeEntryForm = ({
         if (foundOption) {
             form.setValue("sub_project_id", foundOption.id.toString())
         }
+    }
+
+    // Define on Spend on date change handler
+    const onSpentOnChange = async (value: Date | undefined) => {
+        console.log(value);
+        // console.log(subProjectOptions)
+        form.setValue("spent_on", moment(value).toISOString(true).split('T')[0])
     }
 
     return (
@@ -413,7 +421,7 @@ const TimeEntryForm = ({
                                                 )}
                                             >
                                                 {field.value ? (
-                                                    format(field.value, "PPP")
+                                                    format(moment(field.value).toDate(), "PPP")
                                                 ) : (
                                                     <span>Pick a date</span>
                                                 )}
@@ -431,8 +439,8 @@ const TimeEntryForm = ({
                                     >
                                         <Calendar
                                             mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
+                                            selected={moment(field.value).toDate()}
+                                            onSelect={onSpentOnChange}
                                             initialFocus
                                         />
                                     </PopoverContent>

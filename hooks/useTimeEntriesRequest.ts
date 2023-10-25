@@ -1,12 +1,13 @@
 "use client"
 
-import useSWR from 'swr'
-import axios from 'axios'
+import moment from 'moment';
+import useSWR from 'swr';
+import axios from 'axios';
 import { DateRange } from "react-day-picker";
 import { addDays } from 'date-fns';
 import { useUser } from '@clerk/nextjs';
 
-import { TTimeEntries } from "@/types/index"
+import { TTimeEntries } from "@/types/index";
 import { UserRedmineConnection } from '@prisma/client';
 
 const fetchTimeEntriesWithConnection = (params: { url: string, connections: UserRedmineConnection[] }) => {
@@ -27,10 +28,11 @@ const useTimeEntriesRequest = (
 ) => {
     const { isSignedIn, user, isLoaded } = useUser();
 
+    console.log(date);
     let params = {
         "userId": user?.id ?? "",
-        "from": date?.from ? date.from.toISOString().split('T')[0] : addDays(new Date(), -7).toISOString().split('T')[0],
-        "to": date?.to ? date.to.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        "from": date?.from ? moment(date.from).toISOString(true).split('T')[0] : moment(addDays(new Date(), -7)).toISOString(true).split('T')[0],
+        "to": date?.to ? moment(date.to).toISOString(true).split('T')[0] : moment().toISOString(true).split('T')[0]
     }
 
     let usp = new URLSearchParams(params);

@@ -134,6 +134,44 @@ const DashboardPage = () => {
                             </Sheet>
                         </div>
                     </div>
+                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
+                        {(redmineConnections != undefined && redmineConnections?.length > 0) &&
+                            <>
+                                <Card className="h-fit col-span-3">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per day</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerDate
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                                <Card className="h-fit col-span-1">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per week</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerWeek
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </>
+                        }
+                    </div>
                     {redmineConnections?.map((conn: UserRedmineConnection) => {
                         const connectionId = conn.id;
                         let connTimeEntries = timeEntries?.filter(obj => {
@@ -152,60 +190,6 @@ const DashboardPage = () => {
                     <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
                         {(redmineConnections != undefined && redmineConnections?.length > 0) &&
                             <>
-                                <Card className="h-fit col-span-1">
-                                    <CardHeader className="p-4">
-                                        <CardTitle>Hours per week</CardTitle>
-                                        {(date) &&
-                                            <CardDescription>
-                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
-                                            </CardDescription>
-                                        }
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0">
-                                        <HoursPerWeek
-                                            redmineConnections={redmineConnections}
-                                            timeEntries={timeEntries}
-                                        />
-                                    </CardContent>
-                                </Card>
-                                <Card className="h-fit col-span-3">
-                                    <CardHeader className="p-4">
-                                        <CardTitle>Hours per day</CardTitle>
-                                        {(date) &&
-                                            <CardDescription>
-                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
-                                            </CardDescription>
-                                        }
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0">
-                                        <HoursPerDate
-                                            redmineConnections={redmineConnections}
-                                            timeEntries={timeEntries}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </>
-                        }
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
-                        {(redmineConnections != undefined && redmineConnections?.length > 0) &&
-                            <>
-                                <Card className="h-fit col-span-1">
-                                    <CardHeader className="p-4">
-                                        <CardTitle>Hours per Redmine</CardTitle>
-                                        {(date) &&
-                                            <CardDescription>
-                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
-                                            </CardDescription>
-                                        }
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0">
-                                        <HoursPerConnection
-                                            redmineConnections={redmineConnections}
-                                            timeEntries={timeEntries}
-                                        />
-                                    </CardContent>
-                                </Card>
                                 <Card className="h-fit col-span-3">
                                     <CardHeader className="p-4">
                                         <CardTitle>Hours per project</CardTitle>
@@ -217,6 +201,22 @@ const DashboardPage = () => {
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0">
                                         <HoursPerProject
+                                            redmineConnections={redmineConnections}
+                                            timeEntries={timeEntries}
+                                        />
+                                    </CardContent>
+                                </Card>
+                                <Card className="h-fit col-span-1">
+                                    <CardHeader className="p-4">
+                                        <CardTitle>Hours per Redmine</CardTitle>
+                                        {(date) &&
+                                            <CardDescription>
+                                                Hours logged from {date?.from?.toISOString().split('T')[0]} to {date?.to?.toISOString().split('T')[0]}
+                                            </CardDescription>
+                                        }
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <HoursPerConnection
                                             redmineConnections={redmineConnections}
                                             timeEntries={timeEntries}
                                         />
