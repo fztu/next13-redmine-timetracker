@@ -3,6 +3,7 @@ import axios, {
     AxiosInstance,
     AxiosRequestConfig
 } from "axios"
+import crypto from "crypto"
 
 export type RedmineApiOptions = {
     host: string
@@ -10,6 +11,7 @@ export type RedmineApiOptions = {
     apiKey?: string
     username?: string
     password?: string
+    needToDecryptApiKey?: boolean
 }
 
 export type UserResponse = {
@@ -123,9 +125,13 @@ export class RedmineApi {
     protected _apiKey: string
     protected _username: string
     protected _password: string
+    protected _needToDecryptApiKey: boolean
 
     protected _instance: AxiosInstance
 
+    protected _algorithm = 'aes-256-cbc'; //Using AES encryption
+    protected _key = process.env?.ENCRYPTION_KEY ?? "";
+    protected _iv: Buffer;
 
     /**
    * Creates a new client wrapper around Redmine API
@@ -142,7 +148,8 @@ export class RedmineApi {
             authType,
             apiKey,
             username,
-            password
+            password,
+            needToDecryptApiKey
         } = opts
 
         this._host = host
@@ -150,6 +157,8 @@ export class RedmineApi {
         this._apiKey = apiKey ?? ""
         this._username = username ?? ""
         this._password = password ?? ""
+        this._needToDecryptApiKey = needToDecryptApiKey ?? false
+        this._iv = username ? crypto.createHash('md5').update(username).digest() : crypto.randomBytes(16);
 
         this._instance = axios.create({ baseURL: this._host })
 
@@ -193,7 +202,11 @@ export class RedmineApi {
         }
 
         if (this._authType == "apikey") {
-            opts.headers!['X-Redmine-API-Key'] = this._apiKey
+            let apikey = this._apiKey;
+            if (this._needToDecryptApiKey) {
+                apikey = this._decrypt(apikey)
+            }
+            opts.headers!['X-Redmine-API-Key'] = apikey
         } else if (this.username && this.password) {
             opts.auth = { username: this.username, password: this.password }
         } else {
@@ -212,6 +225,10 @@ export class RedmineApi {
     ): Promise<UserResponse> {
         try {
             const res = await this.request("GET", "/users/current.json", params);
+            const user = res?.data?.user ?? {};
+            if (user && user?.api_key) {
+                user.api_key = this._encrypt(user.api_key)
+            }
             return {
                 data: res?.data?.user ?? [],
                 status: {
@@ -410,6 +427,24 @@ export class RedmineApi {
         }
     }
 
+    //Encrypting text
+    protected _encrypt(text: string) {
+        // console.log(this._key)
+        // console.log(this._iv)
+        let cipher = crypto.createCipheriv(this._algorithm, this._key, this._iv);
+        let encryptedText = cipher.update(text, "utf-8", "hex");
+        encryptedText += cipher.final("hex");
+        return encryptedText
+    }
+
+    // Decrypting text
+    protected _decrypt(text: string) {
+        let decipher = crypto.createDecipheriv(this._algorithm, this._key, this._iv);
+        let decryptedData = decipher.update(text, "hex", "utf-8");
+        decryptedData += decipher.final("utf8");
+        return decryptedData;
+    }
+
     get host(): string {
         return this._host
     }
@@ -448,6 +483,14 @@ export class RedmineApi {
 
     set password(password: string) {
         this._password = password
+    }
+
+    get needToDecryptApiKey(): boolean {
+        return this._needToDecryptApiKey
+    }
+
+    set needToDecryptApiKey(needToDecryptApiKey: boolean) {
+        this._needToDecryptApiKey = needToDecryptApiKey
     }
 
 }

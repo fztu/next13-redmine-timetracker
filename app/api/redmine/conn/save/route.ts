@@ -3,7 +3,8 @@ import { auth } from '@clerk/nextjs';
 
 import type { 
     RedmineApiOptions, 
-    User as RedmineUser 
+    User as RedmineUser, 
+    UserResponse
 } from "@/lib/redmine"
 import { RedmineApi } from "@/lib/redmine"
 import prismadb from '@/lib/prismadb';
@@ -16,7 +17,7 @@ export async function POST(
             const { userId } = auth();
             const body = await req.json();
             console.log(body);
-            const { id, name, url, apikey } = body;
+            const { id, name, url, apikey, username, password} = body;
 
             if (!userId) {
                 return new NextResponse("Unauthorized", { status: 401 });
@@ -40,13 +41,44 @@ export async function POST(
 
             console.log(userRedmineConnection);
 
-            const ops: RedmineApiOptions = {
-                host: url,
-                authType: "apikey",
-                apiKey: apikey
+            let currentUser = undefined;
+            // There are url, and apikey from frontend form
+            if (url && apikey) {
+                const ops: RedmineApiOptions = {
+                    host: url,
+                    authType: "apikey",
+                    apiKey: apikey
+                }
+                const redmine = new RedmineApi(ops);
+                currentUser = await redmine.current_user([]);
+            } else if (url && username && password) {
+                const ops: RedmineApiOptions = {
+                    host: url,
+                    authType: "password",
+                    username: username,
+                    password: password
+                }
+                const redmine = new RedmineApi(ops);
+                currentUser = await redmine.current_user([]);
+            } else if ( id ) {
+                const userRedmineConnection = await prismadb.userRedmineConnection.findUnique({
+                    where: {
+                        id: id
+                    }
+                });
+                if (!userRedmineConnection) {
+                    return new NextResponse("Connection ID is not found", { status: 400 });
+                }
+                const ops: RedmineApiOptions = {
+                    host: url,
+                    username: userRedmineConnection?.username,
+                    authType: "apikey",
+                    apiKey: apikey ?? userRedmineConnection.apiKey, // if apikey is submitted, use the submitted value, otherwise use the value in database
+                    needToDecryptApiKey: apikey ? false : true // if apikey is submitted, do not need to decrypt.
+                }
+                const redmine = new RedmineApi(ops);
+                currentUser = await redmine.current_user([]);
             }
-            const redmine = new RedmineApi(ops);
-            const currentUser = await redmine.current_user([]);
 
             if (currentUser?.status?.hasError === false && currentUser?.data) {
                 const redmineUser = currentUser.data as RedmineUser;
@@ -59,7 +91,7 @@ export async function POST(
                         data: {
                             url: url,
                             username: redmineUser.login ?? "",
-                            apiKey: apikey, // will implement encryption
+                            apiKey: redmineUser.api_key ?? "",
                             redmineUserId: redmineUser.id ?? 0,
                             firstname: redmineUser.firstname ?? "",
                             lastname: redmineUser.lastname ?? "",
@@ -77,7 +109,7 @@ export async function POST(
                             url: url,
                             username: redmineUser.login ?? "",
                             password: "",
-                            apiKey: apikey, // Will implement encryption
+                            apiKey: redmineUser.api_key ?? "",
                             redmineUserId: redmineUser.id ?? 0,
                             firstname: redmineUser.firstname ?? "",
                             lastname: redmineUser.lastname ?? "",

@@ -56,8 +56,10 @@ export async function GET(
         console.log(timeEntryRequestParams)
         const ops: RedmineApiOptions = {
             host: userRedmineConnection?.url,
+            username: userRedmineConnection?.username,
             authType: "apikey",
-            apiKey: userRedmineConnection?.apiKey
+            apiKey: userRedmineConnection?.apiKey,
+            needToDecryptApiKey: true
         }
         const redmine = new RedmineApi(ops);
         
@@ -126,8 +128,10 @@ export async function POST(
 
             const ops: RedmineApiOptions = {
                 host: userRedmineConnection?.url,
+                username: userRedmineConnection?.username,
                 authType: "apikey",
-                apiKey: userRedmineConnection?.apiKey
+                apiKey: userRedmineConnection?.apiKey,
+                needToDecryptApiKey: true
             }
             const redmine = new RedmineApi(ops);
 

@@ -54,9 +54,13 @@ const formSchema = z.object({
     }).url({
         message: "Invalid url"
     }),
-    apikey: z.string().nonempty({
-        message: "API Key is required."
-    })
+    username: z.string().nonempty({
+        message: "Username is required."
+    }),
+    password: z.string().optional()
+    // apikey: z.string().nonempty({
+    //     message: "API Key is required."
+    // })
 });
 
 interface RedmineConnectionFormProps {
@@ -79,7 +83,9 @@ const RedmineConnectionForm = ({
             id: userRedmineConnection?.id ?? "",
             name: userRedmineConnection?.name ?? "",
             url: userRedmineConnection?.url ?? "",
-            apikey: userRedmineConnection?.apiKey ?? ""
+            username: userRedmineConnection?.username ?? "",
+            // password: "******"
+            // apikey: userRedmineConnection?.apiKey ?? ""
         },
     })
 
@@ -308,12 +314,12 @@ const RedmineConnectionForm = ({
                             </div>
                             <div className="ml-auto font-medium">{userRedmineConnection?.firstname} {userRedmineConnection?.lastname}</div>
                         </div>
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                             <div className="ml-4 space-y-1">
                                 <p className="text-sm font-medium leading-none">Login:</p>
                             </div>
                             <div className="ml-auto font-medium">{userRedmineConnection?.username}</div>
-                        </div>
+                        </div> */}
                         <div className="flex items-center">
                             <div className="ml-4 space-y-1">
                                 <p className="text-sm font-medium leading-none">Email:</p>
@@ -399,6 +405,37 @@ const RedmineConnectionForm = ({
                 />
                 <FormField
                     control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    readOnly={userRedmineConnection?.id ? true : false} 
+                                    className={userRedmineConnection?.id ? "bg-gray-50" : ""}
+                                    type="text" 
+                                    placeholder="" {...field} 
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="******" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                {/* <FormField
+                    control={form.control}
                     name="apikey"
                     render={({ field }) => (
                         <FormItem>
@@ -414,7 +451,7 @@ const RedmineConnectionForm = ({
                             }
                         </FormItem>
                     )}
-                />
+                /> */}
                 <section className="w-full flex flex-row space-x-6">
                     {userRedmineConnection?.id &&
                         <AlertDialog open={open} onOpenChange={setOpen} >

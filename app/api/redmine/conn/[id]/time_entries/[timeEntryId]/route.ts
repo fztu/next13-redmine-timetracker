@@ -42,8 +42,10 @@ export async function DELETE(
 
             const ops: RedmineApiOptions = {
                 host: userRedmineConnection?.url,
+                username: userRedmineConnection?.username,
                 authType: "apikey",
-                apiKey: userRedmineConnection?.apiKey
+                apiKey: userRedmineConnection?.apiKey,
+                needToDecryptApiKey: true
             }
             const redmine = new RedmineApi(ops);
 
