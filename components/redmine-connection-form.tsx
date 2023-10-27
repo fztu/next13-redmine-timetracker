@@ -39,6 +39,11 @@ import {
     TooltipTrigger
 } from "@/components/ui/tooltip";
 
+import type { 
+    ProjectResponse,
+    Project as RedmineProject
+} from "@/lib/redmine"
+
 const formSchema = z.object({
     id: z.string(),
     name: z.string().min(2, {
@@ -192,16 +197,78 @@ const RedmineConnectionForm = ({
     }
 
     // Define a Test Connection handler.
+    // vercel has 5s API execution time limit
+    // updat code to retrieve projects page by page, then post to save
     const onRefreshProjects = async (values: z.infer<typeof formSchema>) => {
         try {
             console.log("Refresh projects");
-            console.log(values);
+            // console.log(values);
             setIsLoading(true);
-            const response = await axios.get(
-                `/api/redmine/conn/${values.id}/projects`
+            let offset = 0
+            let limit = 100
+            let params = {
+                "offset": offset.toString(),
+                "limit": limit.toString()
+            }
+        
+            let usp = new URLSearchParams(params);
+            usp.sort();
+            let qs = usp.toString();
+            let allProjects: RedmineProject[] = []
+            let level1Projects: RedmineProject[] = [];
+            // let level2Projects: RedmineProject[] = [];
+            let projectsResponse = await axios.get(
+                `/api/redmine/conn/${values.id}/projectsperpage?${qs}`
+            );
+            // console.log(projectsResponse.data.data);
+            // console.log(typeof projectsResponse.data.data);
+            // console.log(projectsResponse.data.data.length);
+            let projects: RedmineProject[] = projectsResponse.data.data;
+            if (projects && projects.length > 0) {
+                allProjects = [...projects]
+                while (projects.length > 0) {
+                    offset += limit
+                    params = {
+                        "offset": offset.toString(),
+                        "limit": limit.toString()
+                    }
+                    usp = new URLSearchParams(params);
+                    usp.sort();
+                    qs = usp.toString();
+                    projectsResponse = await axios.get(
+                        `/api/redmine/conn/${values.id}/projectsperpage?${qs}`
+                    );
+                    projects = projectsResponse.data.data;
+                    if (projects && projects.length > 0) {
+                        allProjects = [...allProjects, ...projects]
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            if (allProjects.length > 0) {
+                let activeProjects = allProjects.filter(p => p.status == 1);
+                activeProjects.forEach((p, idx) => {
+                    // console.log(p);
+                    if (p.parent?.id) {
+                    } else {
+                        let children = activeProjects.filter(obj => {
+                            return obj?.parent?.id == p.id
+                        });
+                        p.children = children;
+                        level1Projects.push(p);
+                    }
+                });
+            }
+            // console.log(level1Projects);
+
+            const response = await axios.post(
+                `/api/redmine/conn/${values.id}/projects/cache`,
+                {"projects": JSON.stringify(level1Projects)}
             );
             console.log(response.data);
-            if (response?.data?.length > 0) {
+            if (response?.data?.success) {
                 toast({
                     title: "Projects Refreshed Sucess",
                     description: "Redmine projects refreshed successfully.",
