@@ -185,6 +185,14 @@ export class RedmineApi {
 
     }
 
+    /**
+     * Makes an asynchronous HTTP request to the specified path using the given method and parameters.
+     * @param {string} method - The HTTP method to use for the request (e.g., GET, POST, PUT, PATCH).
+     * @param {string} path - The path of the resource to request.
+     * @param {object} params - The parameters to include in the request.
+     * @returns {Promise<any>} - A promise that resolves to the response data.
+     * @throws {Error} - If neither an API key nor a username/password is provided.
+     */
     async request(
         method: string,
         path: string,
@@ -220,6 +228,12 @@ export class RedmineApi {
      * Returns current user details
      * http://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
      */
+    /**
+     * Retrieves the current user information from the server.
+     * @param {Object} params - Additional parameters for the API request.
+     * @returns {Promise<UserResponse>} A promise that resolves to a UserResponse object containing the user data and status information.
+     * @throws {Error} If there is an error during the API request.
+     */
     async current_user(
         params: {}
     ): Promise<UserResponse> {
@@ -251,6 +265,12 @@ export class RedmineApi {
      * Listing projects
      * http://www.redmine.org/projects/redmine/wiki/Rest_Projects#Listing-projects
      */
+    /**
+     * Retrieves a list of projects from the server.
+     * @param {Object} params - Additional parameters for the request.
+     * @returns {Promise<ProjectResponse>} A promise that resolves to a ProjectResponse object containing the project data and status information.
+     * @throws {Error} If an error occurs during the request.
+     */
     async projects(
         params: {}
     ): Promise<ProjectResponse> {
@@ -276,6 +296,12 @@ export class RedmineApi {
     /**
      * Returns the list of time entry activities.
      * http://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-2
+     */
+    /**
+     * Retrieves a list of time entry activities.
+     * @param {Object} params - Additional parameters for the request.
+     * @returns {Promise<TimeEntryActivityResponse>} A promise that resolves to a response object containing the time entry activities.
+     * @throws {Error} If an error occurs during the request.
      */
     async activities(
         params: {}
@@ -304,6 +330,12 @@ export class RedmineApi {
      * Listing time entries
      * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Listing-time-entries
      */
+    /**
+     * Retrieves time entries from the server based on the provided parameters.
+     * @param {Object} params - The parameters for the time entries request.
+     * @returns {Promise<TimeEntryResponse>} A promise that resolves to a TimeEntryResponse object containing the retrieved time entries and the status of the request.
+     * @throws {Error} If an error occurs during the request.
+     */
     async time_entries(
         params: {}
     ): Promise<TimeEntryResponse> {
@@ -330,6 +362,15 @@ export class RedmineApi {
      * Creating a time entry
      * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Creating-a-time-entry
      */
+    /**
+     * Creates a time entry by making a POST request to the "/time_entries.json" endpoint.
+     * @param {Object} params - The parameters for the time entry.
+     * @returns {Promise<TimeEntryResponse>} A promise that resolves to a TimeEntryResponse object.
+     * The TimeEntryResponse object contains the data of the created time entry and the status of the request.
+     * If the request is successful, the data property will contain an array of time entries and the status property
+     * will have statusCode, statusText, errorText, and hasError properties. If there is an error, the data property
+     * will be an empty array and the status property will be the result of the _errorHandler method.
+     */
     async create_time_entry (
         params: {}
     ): Promise<TimeEntryResponse> {
@@ -355,6 +396,16 @@ export class RedmineApi {
     /**
      * Updating a time entry
      * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Updating-a-time-entry
+     */
+    /**
+     * Updates a time entry with the specified ID using the provided parameters.
+     * @param {number} id - The ID of the time entry to update.
+     * @param {object} params - The parameters to update the time entry with.
+     * @returns {Promise<TimeEntryResponse>} A promise that resolves to a TimeEntryResponse object.
+     * The TimeEntryResponse object contains the updated time entry data and the status of the update.
+     * If the update is successful, the data field will contain the updated time entry data and the
+     * status field will have statusCode and statusText properties indicating the success. If the update
+     * fails, the data field will be an empty array and the status field will contain error information.
      */
     async update_time_entry (
         id: number,
@@ -383,6 +434,16 @@ export class RedmineApi {
      * Deleting a time entry
      * http://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Deleting-a-time-entry
      */
+    /**
+     * Deletes a time entry with the specified ID.
+     * @param {number} id - The ID of the time entry to delete.
+     * @returns {Promise<TimeEntryResponse>} A promise that resolves to a TimeEntryResponse object.
+     * The TimeEntryResponse object contains the deleted time entry data and the status of the deletion.
+     * If the deletion is successful, the data property will contain the deleted time entry data and the
+     * status property will have statusCode and statusText properties indicating the success status.
+     * If an error occurs during the deletion, the data property will be an empty array and the status
+     * property will contain error information.
+     */
     async delete_time_entry (
         id: number
     ): Promise<TimeEntryResponse> {
@@ -406,6 +467,11 @@ export class RedmineApi {
     }
 
 
+    /**
+     * Handles errors that occur during an API request and returns a standardized response object.
+     * @param {any} err - The error object that was thrown.
+     * @returns {StatusResponse} - The standardized response object containing the error details.
+     */
     protected _errorHandler(
         err: any
     ): StatusResponse {
@@ -428,6 +494,11 @@ export class RedmineApi {
     }
 
     //Encrypting text
+    /**
+     * Encrypts the given text using the specified algorithm, key, and initialization vector.
+     * @param {string} text - The text to encrypt.
+     * @returns {string} The encrypted text.
+     */
     protected _encrypt(text: string) {
         // console.log(this._key)
         // console.log(this._iv)
@@ -438,6 +509,11 @@ export class RedmineApi {
     }
 
     // Decrypting text
+    /**
+     * Decrypts the given text using the specified algorithm, key, and initialization vector.
+     * @param {string} text - The text to decrypt.
+     * @returns The decrypted data.
+     */
     protected _decrypt(text: string) {
         let decipher = crypto.createDecipheriv(this._algorithm, this._key, this._iv);
         let decryptedData = decipher.update(text, "hex", "utf-8");
@@ -445,50 +521,104 @@ export class RedmineApi {
         return decryptedData;
     }
 
+    /**
+     * Get the host value.
+     * @returns {string} The host value.
+     */
     get host(): string {
         return this._host
     }
 
+    /**
+     * Setter method for the host property.
+     * @param {string} host - The new value for the host property.
+     * @returns None
+     */
     set host(host: string) {
         this._host = host
     }
 
+    /**
+     * Get the authentication type.
+     * @returns {string} The authentication type.
+     */
     get authType(): string {
         return this._authType
     }
 
+    /**
+     * Setter method for the authentication type.
+     * @param {string} authType - The authentication type to set.
+     * @returns None
+     */
     set authType(authType: string) {
         this._authType = authType
     }
 
+    /**
+     * Get the API key.
+     * @returns {string} The API key.
+     */
     get apiKey(): string {
         return this._apiKey
     }
 
+    /**
+     * Setter method for the API key.
+     * @param {string} apiKey - The API key to set.
+     * @returns None
+     */
     set apiKey(apiKey: string) {
         this._apiKey = apiKey
     }
 
+    /**
+     * Get the username.
+     * @returns {string} The username.
+     */
     get username(): string {
         return this._username
     }
 
+    /**
+     * Setter method for the username property.
+     * @param {string} username - The new value for the username.
+     * @returns None
+     */
     set username(username: string) {
         this._username = username
     }
 
+    /**
+     * Getter method for retrieving the password.
+     * @returns {string} The password value.
+     */
     get password(): string {
         return this._password
     }
 
+    /**
+     * Setter method for the password property.
+     * @param {string} password - The new password value.
+     * @returns None
+     */
     set password(password: string) {
         this._password = password
     }
 
+    /**
+     * Getter method for the needToDecryptApiKey property.
+     * @returns {boolean} - Indicates whether the API key needs to be decrypted.
+     */
     get needToDecryptApiKey(): boolean {
         return this._needToDecryptApiKey
     }
 
+    /**
+     * Setter method for the needToDecryptApiKey property.
+     * @param {boolean} needToDecryptApiKey - The new value for the needToDecryptApiKey property.
+     * @returns None
+     */
     set needToDecryptApiKey(needToDecryptApiKey: boolean) {
         this._needToDecryptApiKey = needToDecryptApiKey
     }

@@ -81,6 +81,15 @@ const TimeEntryForm = ({
     const [subProjectOptions, setSubProjectOptions] = useState<Array<{ id: number, name: string }>>([])
     const containerRef = useRef<HTMLDivElement>(null);
 
+    /**
+     * Retrieves the user's Redmine connections using the useRedmineConnectionsRequest hook.
+     * @returns An object containing the user's Redmine connections data, loading status, validation status, error, and a function to mutate the connections data.
+     * - data: The user's Redmine connections.
+     * - isLoading: A boolean indicating whether the connections are currently being loaded.
+     * - isValidating: A boolean indicating whether the connections are currently being validated.
+     * - error: An error object if there was an error retrieving the connections.
+     * - mutate: A function to mutate the connections data.
+     */
     const {
         data: userRedmineConnections,
         isLoading: isRedmineConnectionsLoading,
@@ -89,6 +98,17 @@ const TimeEntryForm = ({
         mutate: mutateRedmineConnections
     } = useRedmineConnectionsRequest();
 
+    /**
+     * Retrieves time entries data using the useTimeEntriesRequest hook.
+     * @param {Date} date - The date for which to retrieve time entries.
+     * @param {UserRedmineConnection[]} userRedmineConnections - An array of user Redmine connections.
+     * @returns An object containing the time entries data, loading status, validation status, error, and mutate function.
+     * - data: The time entries data.
+     * - isLoading: A boolean indicating if the time entries are currently being loaded.
+     * - isValidating: A boolean indicating if the time entries are currently being validated.
+     * - error: An error object if there was an error loading the time entries.
+     * - mutate: A function to manually mutate the time entries data.
+     */
     const {
         data: timeEntries,
         isLoading: isTimeEntriesLoading,
@@ -97,11 +117,22 @@ const TimeEntryForm = ({
         mutate: mutateTimeEntries
     } = useTimeEntriesRequest(date, userRedmineConnections)
 
+    /**
+     * Creates an array of Redmine connection options based on the user's Redmine connections.
+     * @param {Array} userRedmineConnections - The user's Redmine connections.
+     * @returns {Array} An array of Redmine connection options with id and name properties.
+     */
     const redmineConnectionOptions = userRedmineConnections ? userRedmineConnections.map(item => ({
         id: item.id,
         name: item.name
     })) : [];
 
+    /**
+     * Fetches the time entry activity options from the server using the useSWR hook.
+     * @param {string} connectionId - The ID of the connection.
+     * @param {number} user.id - The ID of the user.
+     * @returns {Object} An object containing the time entry activity options, loading state, validation state, and error.
+     */
     const { data: timeEntryActivityOptions, isLoading: isActivitiesLoading, isValidating, error } = useSWR<TimeEntryActivity[]>(
         connectionId ? ('/api/redmine/conn/' + connectionId + '/activities?userId=' + user?.id ?? "") : null,
         fetcher,
@@ -112,11 +143,22 @@ const TimeEntryForm = ({
         }
     );
 
+    /**
+     * Maps the time entry activity options to a new format.
+     * @param {Array} timeEntryActivityOptions - The array of time entry activity options.
+     * @returns {Array} An array of objects with id and name properties.
+     */
     const activityOptons = timeEntryActivityOptions ? timeEntryActivityOptions.map(item => ({
         id: item.id.toString(),
         name: item.name
     })) : [];
 
+    /**
+     * Finds a project in the given array of Redmine projects by its ID.
+     * @param {RedmineProject[]} data - The array of Redmine projects to search in.
+     * @param {number} targetId - The ID of the project to find.
+     * @returns The project object if found, otherwise undefined.
+     */
     const findProjectById= function (data: RedmineProject[], targetId: number) {
         for (const project of data) {
             if (project.id === targetId) {
@@ -133,6 +175,11 @@ const TimeEntryForm = ({
     }
 
     // 1. Define your form.
+    /**
+     * Creates a form using the useForm hook from the react-hook-form library.
+     * @param {z.infer<typeof formSchema>} - The inferred type of the form schema.
+     * @returns The created form object.
+     */
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -148,6 +195,14 @@ const TimeEntryForm = ({
         }
     })
 
+    /**
+     * useEffect hook that runs when the redmineConnection, timeEntry, or form values change.
+     * It updates the form values based on the redmineConnection and timeEntry data.
+     * @param {Object} redmineConnection - The redmine connection object.
+     * @param {Object} timeEntry - The time entry object.
+     * @param {Object} form - The form object.
+     * @returns None
+     */
     useEffect(() => {
         if (redmineConnection) {
             setProjectOptions(redmineConnection.projects ? JSON.parse(redmineConnection.projects) : []);
@@ -176,6 +231,11 @@ const TimeEntryForm = ({
     }, [redmineConnection, timeEntry, form]);
 
     // 2. Define a submit handler.
+    /**
+     * Handles the submission of a time entry form.
+     * @param {object} values - The values from the time entry form.
+     * @returns None
+     */
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             console.log("Submit time entry");
@@ -209,6 +269,11 @@ const TimeEntryForm = ({
     }
 
     // Define on Redmine connection change handler
+    /**
+     * Handles the change event of the Redmine connection input field.
+     * @param {string} value - The new value of the Redmine connection input field.
+     * @returns None
+     */
     const onRedmineConnectionChange = async (value: string) => {
         // console.log(value);
         setProjectOptions([])
@@ -224,6 +289,11 @@ const TimeEntryForm = ({
     }
 
     // Define on Redmine project change handler
+    /**
+     * Handles the change event when the project value is selected.
+     * @param {string} value - The selected project value.
+     * @returns None
+     */
     const onProjectChange = async (value: string) => {
         // console.log(value);
         setSubProjectOptions([])
@@ -237,6 +307,11 @@ const TimeEntryForm = ({
     }
 
     // Define on Redmine sub project change handler
+    /**
+     * Handles the change event of the time entry activity dropdown.
+     * @param {string} value - The selected value from the dropdown.
+     * @returns None
+     */
     const onTimeEntryActivityChange = async (value: string) => {
         // console.log(value);
         const foundOption = activityOptons?.find(
@@ -248,6 +323,11 @@ const TimeEntryForm = ({
     }
 
     // Define on Redmine sub project change handler
+    /**
+     * Handles the change event of the sub project select input.
+     * @param {string} value - The selected value from the sub project select input.
+     * @returns None
+     */
     const onSubProjectChange = async (value: string) => {
         // console.log(value);
         // console.log(subProjectOptions)
@@ -260,6 +340,11 @@ const TimeEntryForm = ({
     }
 
     // Define on Spend on date change handler
+    /**
+     * Handles the change event for the "spent_on" field.
+     * @param {Date | undefined} value - The new value of the field.
+     * @returns None
+     */
     const onSpentOnChange = async (value: Date | undefined) => {
         console.log(value);
         // console.log(subProjectOptions)

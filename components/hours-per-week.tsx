@@ -26,7 +26,7 @@ const HoursPerWeek = ({
             for (const hourEntry of hoursData) {
                 const spentOnDate = new Date(hourEntry.spent_on);
                 const weekStartDate = new Date(spentOnDate);
-                weekStartDate.setDate(spentOnDate.getDate() - (spentOnDate.getDay() + 1) % 7); // Set to the previous Sunday
+                weekStartDate.setDate(spentOnDate.getDate() - spentOnDate.getDay());
 
                 // Format the week start date as a string (YYYY-MM-DD)
                 const weekStartString = weekStartDate.toISOString().split('T')[0];

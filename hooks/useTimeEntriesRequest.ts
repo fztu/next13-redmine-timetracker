@@ -10,6 +10,13 @@ import { useUser } from '@clerk/nextjs';
 import { TTimeEntries } from "@/types/index";
 import { UserRedmineConnection } from '@prisma/client';
 
+/**
+ * Fetches time entries from multiple Redmine connections using the provided URL.
+ * @param {Object} params - The parameters for fetching time entries.
+ * @param {string} params.url - The URL to fetch the time entries from. The string 'CONNECTIONID' will be replaced with the actual connection ID.
+ * @param {UserRedmineConnection[]} params.connections - An array of Redmine connections to fetch time entries from.
+ * @returns {Promise<TTimeEntries[]>} - A promise that resolves to an array of time entries, each containing the connection ID and the fetched data.
+ */
 const fetchTimeEntriesWithConnection = (params: { url: string, connections: UserRedmineConnection[] }) => {
     const url = params.url
     const connections = params.connections
@@ -22,6 +29,12 @@ const fetchTimeEntriesWithConnection = (params: { url: string, connections: User
     return Promise.all(connections.map(conn => f(url, conn)))
 }
 
+/**
+ * Custom hook that fetches time entries from the server based on the provided date range and Redmine connections.
+ * @param {DateRange | undefined} date - The date range to filter the time entries.
+ * @param {UserRedmineConnection[] | undefined} redmineConnections - The Redmine connections to fetch time entries from.
+ * @returns An object containing the fetched time entries, loading state, validation state, error, and a mutate function.
+ */
 const useTimeEntriesRequest = (
     date: DateRange | undefined,
     redmineConnections: UserRedmineConnection[] | undefined
