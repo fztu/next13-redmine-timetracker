@@ -42,6 +42,8 @@ export async function GET(
         const redmine = new RedmineApi(ops);
         const projectsParams: string[] = ["offset", "limit"];
         let projectsRequestParams = { ...params}
+        // After Redmine upgrade to 5.x id parameter is causing issue
+        if (projectsRequestParams?.id) delete projectsRequestParams.id;
         const url = new URL(req.url)
         projectsParams.map((param: string) => {
             if (url.searchParams.get(param)) {
