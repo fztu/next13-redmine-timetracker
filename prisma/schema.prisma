@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url = env("DATABASE_URL")
   relationMode = "prisma"
 }
@@ -23,7 +23,7 @@ model UserRedmineConnection {
   redmineCreatedOn DateTime @default("1970-01-01T00:00:00.000Z")
   redmineLastLoginOn DateTime @default("1970-01-01T00:00:00.000Z")
   maxProjectLevels Int @default(2)
-  projects String @db.LongText
+  projects String @db.Text
   status Int @default(1)
   deleted Int @default(0)
   createdAt DateTime @default(now())
