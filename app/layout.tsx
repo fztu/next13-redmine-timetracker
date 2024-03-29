@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from '@/components/ui/toaster'
+import { CSPostHogProvider } from './providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,10 +20,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>
-          <Toaster />
-          <main>{children}</main>
-        </body>
+        <CSPostHogProvider>
+          <body className={inter.className}>
+            <Toaster />
+            <main>{children}</main>
+          </body>
+        </CSPostHogProvider>
       </html>
     </ClerkProvider>
 
