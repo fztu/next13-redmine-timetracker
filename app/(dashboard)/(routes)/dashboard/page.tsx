@@ -17,12 +17,14 @@ import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
 import TimeEntriesTable from '@/components/time-entries-table';
 
+import dynamic from 'next/dynamic';
 import { UserRedmineConnection } from '@prisma/client';
-import HoursPerConnection from '@/components/hours-per-connection';
 import useTimeEntriesRequest from '@/hooks/useTimeEntriesRequest';
-import HoursPerWeek from '@/components/hours-per-week';
-import HoursPerDate from '@/components/hours-per-date';
-import HoursPerProject from '@/components/hours-per-project';
+
+const HoursPerConnection = dynamic(() => import('@/components/hours-per-connection'), { ssr: false });
+const HoursPerWeek = dynamic(() => import('@/components/hours-per-week'), { ssr: false });
+const HoursPerDate = dynamic(() => import('@/components/hours-per-date'), { ssr: false });
+const HoursPerProject = dynamic(() => import('@/components/hours-per-project'), { ssr: false });
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import TimeEntryForm from '@/components/time-entry-form';
 import useRedmineConnectionsRequest from '@/hooks/useRedmineConnectionsRequest';
