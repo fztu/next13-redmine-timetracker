@@ -1,15 +1,16 @@
-import { Menu } from "lucide-react";
+"use client";
+
 import { UserButton } from "@clerk/nextjs";
 
 import MobileSidebar from "@/components/mobile-sidebar";
 
 
 const Navbar = () => {
-    return ( 
+    return (
         <div className="flex items-center p-2">
             <MobileSidebar />
             <div className="flex w-full justify-end">
-                <UserButton afterSignOutUrl="/" />
+                <UserButton />
             </div>
         </div>
      );

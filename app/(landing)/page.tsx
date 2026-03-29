@@ -1,19 +1,11 @@
-"use client";
-
-import Link from "next/link";
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { useUser } from "@clerk/nextjs";
 
-import { Button } from "@/components/ui/button";
-
-const LandingPage = () => {
-    const { isSignedIn, user, isLoaded } = useUser();
-
-    if (isSignedIn) {
+export default async function LandingPage() {
+    const { userId } = await auth()
+    if (userId) {
         redirect('/dashboard')
     } else {
         redirect('/sign-in')
     }
 }
- 
-export default LandingPage;
