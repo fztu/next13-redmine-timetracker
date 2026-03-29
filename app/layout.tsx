@@ -7,6 +7,8 @@ import { CSPostHogProvider } from './providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Redmine Time Tracker',
   description: 'Redmine Time Tracker',
