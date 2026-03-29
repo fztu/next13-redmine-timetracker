@@ -22,14 +22,13 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl="/">
       <html lang="en">
-        <CSPostHogProvider>
-          <body className={inter.className}>
+        <body className={inter.className}>
+          <CSPostHogProvider>
             <Toaster />
             <main>{children}</main>
-          </body>
-        </CSPostHogProvider>
+          </CSPostHogProvider>
+        </body>
       </html>
     </ClerkProvider>
-
   )
 }
