@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { 
     RedmineApiOptions, 
@@ -10,14 +10,13 @@ import prismadb from '@/lib/prismadb';
 
 export async function DELETE(
     req: NextRequest,
-    { params }: any
+    { params }: { params: Promise<{ id: string; timeEntryId: string }> }
 ) {
     if (req.method === 'DELETE') {
         try {
-            const { userId } = auth();
-            console.log(params);
-            const id = params?.id ?? "";
-            const timeEntryId = params?.timeEntryId ?? "";
+            const { userId } = await auth();
+            const { id, timeEntryId } = await params;
+            console.log(id, timeEntryId);
             if (!userId) {
                 return new NextResponse("Unauthorized", { status: 401 });
             }
@@ -49,7 +48,7 @@ export async function DELETE(
             }
             const redmine = new RedmineApi(ops);
 
-            const timeEntryResponse = await redmine.delete_time_entry(timeEntryId)
+            const timeEntryResponse = await redmine.delete_time_entry(parseInt(timeEntryId))
             console.log(timeEntryResponse)
             return NextResponse.json(timeEntryResponse);
         } catch (error: any) {

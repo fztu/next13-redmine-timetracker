@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { 
     RedmineApiOptions, 
@@ -10,18 +10,15 @@ import prismadb from '@/lib/prismadb';
 
 export async function GET(
     req: NextRequest,
-    { params }: any
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const id = params?.id ?? "";
-        if (!id) {
-            return new NextResponse("ID is required", { status: 400 });
-        }
+        const { id } = await params;
 
         const userRedmineConnection = await prismadb.userRedmineConnection.findUnique({
             where: {
@@ -46,6 +43,6 @@ export async function GET(
         return NextResponse.json(allActivities);
     } catch (err: any) {
         console.error(err);
-        return [];
+        return new NextResponse("Something is wrong", { status: 500 });
     }
 }

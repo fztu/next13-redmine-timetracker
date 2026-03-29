@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { User as RedmineUser } from "@/lib/redmine"
 import prismadb from '@/lib/prismadb';
 
 export async function GET(
-  req: NextRequest,
-  res: NextResponse<RedmineUser[]>
+  req: NextRequest
 ) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
@@ -25,6 +24,6 @@ export async function GET(
         return NextResponse.json(userRedmineConnections);
     } catch (err: any) {
         console.error(err);
-        return [];
+        return new NextResponse("Something is wrong", { status: 500 });
     }
 }

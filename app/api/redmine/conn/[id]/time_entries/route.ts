@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { 
     RedmineApiOptions, 
@@ -14,18 +14,15 @@ import prismadb from '@/lib/prismadb';
 
 export async function GET(
     req: NextRequest,
-    { params }: any
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const id = params?.id ?? "";
-        if (!id) {
-            return new NextResponse("ID is required", { status: 400 });
-        }
+        const { id } = await params;
 
         const userRedmineConnection = await prismadb.userRedmineConnection.findUnique({
             where: {
@@ -43,7 +40,7 @@ export async function GET(
             return new NextResponse("Redmine user id is empty", { status: 400 });
         }
 
-        let timeEntryRequestParams = { ...params}
+        let timeEntryRequestParams: Record<string, any> = {}
         timeEntryRequestParams.user_id = redmine_user_id
 
         const timeEntryParams: string[] = ["from", "to", "project_id", "offset", "limit"];
@@ -93,17 +90,17 @@ export async function GET(
 
     } catch (err: any) {
         console.error(err);
-        return [];
+        return new NextResponse("Something is wrong", { status: 500 });
     }
 }
 
 export async function POST(
     req: NextRequest,
-    { params }: any
+    { params }: { params: Promise<{ id: string }> }
 ) {
     if (req.method === 'POST') {
         try {
-            const { userId } = auth();
+            const { userId } = await auth();
             const body = await req.json();
             console.log(body);
 
@@ -111,7 +108,7 @@ export async function POST(
                 return new NextResponse("Unauthorized", { status: 401 });
             }
 
-            const id = params?.id ?? "";
+            const { id } = await params;
             if (!id) {
                 return new NextResponse("ID is required", { status: 400 });
             }

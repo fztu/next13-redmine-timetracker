@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { 
     RedmineApiOptions, 
@@ -14,7 +14,7 @@ export async function POST(
 ) {
     if (req.method === 'POST') {
         try {
-            const { userId } = auth();
+            const { userId } = await auth();
             const body = await req.json();
             console.log(body);
             const { id, name, url, apikey, username, password} = body;

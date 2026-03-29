@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 import type { 
     RedmineApiOptions, 
@@ -10,18 +10,15 @@ import prismadb from '@/lib/prismadb';
 
 export async function GET(
     req: NextRequest,
-    { params }: any
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const id = params?.id ?? "";
-        if (!id) {
-            return new NextResponse("ID is required", { status: 400 });
-        }
+        const { id } = await params;
 
         const userRedmineConnection = await prismadb.userRedmineConnection.findUnique({
             where: {
@@ -41,9 +38,7 @@ export async function GET(
         }
         const redmine = new RedmineApi(ops);
         const projectsParams: string[] = ["offset", "limit"];
-        let projectsRequestParams = { ...params}
-        // After Redmine upgrade to 5.x id parameter is causing issue
-        if (projectsRequestParams?.id) delete projectsRequestParams.id;
+        let projectsRequestParams: Record<string, any> = {};
         const url = new URL(req.url)
         projectsParams.map((param: string) => {
             if (url.searchParams.get(param)) {
@@ -54,6 +49,6 @@ export async function GET(
         return NextResponse.json(projectsResponse);
     } catch (err: any) {
         console.error(err);
-        return [];
+        return new NextResponse("Something is wrong", { status: 500 });
     }
 }
