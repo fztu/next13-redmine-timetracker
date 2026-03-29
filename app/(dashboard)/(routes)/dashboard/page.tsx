@@ -13,9 +13,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import CalendarDateRangePicker from '@/components/date-range-picker';
 import { Button } from '@/components/ui/button';
-import TimeEntriesTable from '@/components/time-entries-table';
 
 import dynamic from 'next/dynamic';
 import { UserRedmineConnection } from '@prisma/client';
@@ -25,8 +23,10 @@ const HoursPerConnection = dynamic(() => import('@/components/hours-per-connecti
 const HoursPerWeek = dynamic(() => import('@/components/hours-per-week'), { ssr: false });
 const HoursPerDate = dynamic(() => import('@/components/hours-per-date'), { ssr: false });
 const HoursPerProject = dynamic(() => import('@/components/hours-per-project'), { ssr: false });
+const CalendarDateRangePicker = dynamic(() => import('@/components/date-range-picker'), { ssr: false });
+const TimeEntriesTable = dynamic(() => import('@/components/time-entries-table'), { ssr: false });
+const TimeEntryForm = dynamic(() => import('@/components/time-entry-form'), { ssr: false });
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import TimeEntryForm from '@/components/time-entry-form';
 import useRedmineConnectionsRequest from '@/hooks/useRedmineConnectionsRequest';
 
 const DashboardPage = () => {
