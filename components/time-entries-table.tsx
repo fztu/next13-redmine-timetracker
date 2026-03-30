@@ -104,7 +104,7 @@ const TimeEntriesTable = ({
                 </div>
 
                 <Sheet>
-                    <SheetTrigger className="ml-auto">
+                    <SheetTrigger asChild>
                         <Button
                             variant="outline"
                             type="button"

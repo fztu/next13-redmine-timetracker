@@ -180,8 +180,8 @@ const TimeEntryForm = ({
      * @param {z.infer<typeof formSchema>} - The inferred type of the form schema.
      * @returns The created form object.
      */
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.output<typeof formSchema>, unknown, z.output<typeof formSchema>>({
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             id: "",
             comments: "",

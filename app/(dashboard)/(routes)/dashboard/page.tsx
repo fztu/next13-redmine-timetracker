@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
+import type { DateRange } from 'react-day-picker';
 import axios from 'axios'
 import Link from 'next/link';
 import { addDays } from "date-fns"
@@ -119,7 +119,7 @@ const DashboardPage = () => {
                                 Refresh
                             </Button>
                             <Sheet>
-                                <SheetTrigger className="ml-auto">
+                                <SheetTrigger asChild>
                                     <Button
                                         variant="outline"
                                         type="button"

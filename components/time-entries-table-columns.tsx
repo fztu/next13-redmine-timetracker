@@ -138,7 +138,7 @@ export const TimeEntryTableColumns: ColumnDef<TimeEntry>[] = [
             return (
                 <section className="w-full flex flex-row space-x-4">
                     <Sheet>
-                        <SheetTrigger className="ml-auto">
+                        <SheetTrigger asChild>
                             <Button
                                 variant="ghost"
                                 type="button"
