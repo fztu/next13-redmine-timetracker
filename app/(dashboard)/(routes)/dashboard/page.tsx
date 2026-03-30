@@ -26,6 +26,7 @@ const HoursPerProject = dynamic(() => import('@/components/hours-per-project'), 
 const CalendarDateRangePicker = dynamic(() => import('@/components/date-range-picker'), { ssr: false });
 const TimeEntriesTable = dynamic(() => import('@/components/time-entries-table'), { ssr: false });
 const TimeEntryForm = dynamic(() => import('@/components/time-entry-form'), { ssr: false });
+const DuplicateWeekDialog = dynamic(() => import('@/components/duplicate-week-dialog'), { ssr: false });
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import useRedmineConnectionsRequest from '@/hooks/useRedmineConnectionsRequest';
 
@@ -118,6 +119,11 @@ const DashboardPage = () => {
                             >
                                 Refresh
                             </Button>
+                            <DuplicateWeekDialog
+                                timeEntries={timeEntries}
+                                redmineConnections={redmineConnections}
+                                onSuccess={mutateTimeEntries}
+                            />
                             <Sheet>
                                 <SheetTrigger asChild>
                                     <Button
