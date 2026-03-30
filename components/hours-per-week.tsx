@@ -8,11 +8,13 @@ import { TimeEntry } from "@/lib/redmine";
 interface HoursPerWeekProps {
     redmineConnections: UserRedmineConnection[],
     timeEntries: TTimeEntries[] | undefined
+    onWeekClick?: (weekStart: string) => void
 }
 
 const HoursPerWeek = ({
     redmineConnections,
-    timeEntries
+    timeEntries,
+    onWeekClick,
 }: HoursPerWeekProps) => {
     // Create an array to store the sum of hours for each week as objects
     const sumOfHoursByWeekArray: { week: string, hours: number }[] = [];
@@ -54,10 +56,20 @@ const HoursPerWeek = ({
                     >
                         <XAxis type="category" fontSize={10} height={100} angle={-45} textAnchor="end" dataKey="week"/>
                         <YAxis type="number"  />
-                        <Bar height={300} label={{ fill: "#ffffff" }} dataKey="hours" fill="#0088FE" />
+                        <Bar
+                            height={300}
+                            label={{ fill: "#ffffff" }}
+                            dataKey="hours"
+                            fill="#0088FE"
+                            style={{ cursor: onWeekClick ? "pointer" : "default" }}
+                            onClick={(data) => onWeekClick?.((data as unknown as { week: string }).week)}
+                        />
                         <Tooltip />
                     </BarChart>
                 </ResponsiveContainer>
+                {onWeekClick && (
+                    <p className="text-xs text-muted-foreground text-center mt-1">Click on a week to view/update details</p>
+                )}
             </div>
         );
     } 

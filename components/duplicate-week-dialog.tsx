@@ -229,16 +229,16 @@ export default function DuplicateWeekDialog({
     return (
         <Dialog open={open} onOpenChange={(val) => { if (!val) handleClose(); else setOpen(true); }}>
             <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className="text-white bg-blue-500 hover:bg-blue-700 hover:text-white">
                     <Copy className="mr-2 h-4 w-4" />
-                    Copy Week
+                    Copy Weekly Entries
                 </Button>
             </DialogTrigger>
 
             {step === "pick" && (
                 <DialogContent className="sm:max-w-[480px]">
                     <DialogHeader>
-                        <DialogTitle>Copy Week</DialogTitle>
+                        <DialogTitle>Copy Weekly Entries</DialogTitle>
                         <DialogDescription>
                             Select a source week to copy from and a target week to copy to.
                         </DialogDescription>

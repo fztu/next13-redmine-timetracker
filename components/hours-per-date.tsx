@@ -8,11 +8,13 @@ import { TimeEntry } from "@/lib/redmine";
 interface HoursPerDateProps {
     redmineConnections: UserRedmineConnection[],
     timeEntries: TTimeEntries[] | undefined
+    onDayClick?: (date: string) => void
 }
 
 const HoursPerDate = ({
     redmineConnections,
-    timeEntries
+    timeEntries,
+    onDayClick,
 }: HoursPerDateProps) => {
     // Create an array to store the sum of hours for each day as objects
     const sumOfHoursByDayArray: { date: string, hours: number }[] = [];
@@ -65,10 +67,20 @@ const HoursPerDate = ({
                     >
                         <XAxis type="number"  />
                         <YAxis type="category" width={150} fontSize={10} textAnchor="end" dataKey="date"/>
-                        <Bar height={300} label={{ fill: "#ffffff" }} dataKey="hours" fill="#0088FE" />
+                        <Bar
+                            height={300}
+                            label={{ fill: "#ffffff" }}
+                            dataKey="hours"
+                            fill="#0088FE"
+                            style={{ cursor: onDayClick ? "pointer" : "default" }}
+                            onClick={(data) => onDayClick?.((data as unknown as { date: string }).date.split(' ')[0])}
+                        />
                         <Tooltip />
                     </BarChart>
                 </ResponsiveContainer>
+                {onDayClick && (
+                    <p className="text-xs text-muted-foreground text-center mt-1">Click on a day to view/update details</p>
+                )}
             </div>
         );
     }

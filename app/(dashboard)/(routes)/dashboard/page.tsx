@@ -4,7 +4,8 @@ import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import axios from 'axios'
 import Link from 'next/link';
-import { addDays } from "date-fns"
+import { addDays, format, parseISO } from "date-fns"
+import type { SelectedRange } from '@/components/week-review-dialog'
 
 import {
     Card,
@@ -27,11 +28,31 @@ const CalendarDateRangePicker = dynamic(() => import('@/components/date-range-pi
 const TimeEntriesTable = dynamic(() => import('@/components/time-entries-table'), { ssr: false });
 const TimeEntryForm = dynamic(() => import('@/components/time-entry-form'), { ssr: false });
 const DuplicateWeekDialog = dynamic(() => import('@/components/duplicate-week-dialog'), { ssr: false });
+const WeekReviewDialog = dynamic(() => import('@/components/week-review-dialog'), { ssr: false });
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import useRedmineConnectionsRequest from '@/hooks/useRedmineConnectionsRequest';
 
 const DashboardPage = () => {
     // const { isSignedIn, user, isLoaded } = useUser();
+    const [selectedRange, setSelectedRange] = useState<SelectedRange | null>(null)
+
+    const handleWeekClick = (weekStart: string) => {
+        const from = weekStart
+        const to = format(addDays(parseISO(weekStart), 6), "yyyy-MM-dd")
+        setSelectedRange({
+            from,
+            to,
+            label: `Week of ${format(parseISO(from), "MMM d")} – ${format(parseISO(to), "MMM d, yyyy")}`,
+        })
+    }
+
+    const handleDayClick = (date: string) => {
+        setSelectedRange({
+            from: date,
+            to: date,
+            label: `${format(parseISO(date), "EEEE, MMM d, yyyy")}`,
+        })
+    }
     const [calendarDate, setCalendarDate] = useState<DateRange | undefined>({
         from: addDays(new Date(), -28),
         to: new Date(),
@@ -158,6 +179,7 @@ const DashboardPage = () => {
                                         <HoursPerDate
                                             redmineConnections={redmineConnections}
                                             timeEntries={timeEntries}
+                                            onDayClick={handleDayClick}
                                         />
                                     </CardContent>
                                 </Card>
@@ -174,6 +196,7 @@ const DashboardPage = () => {
                                         <HoursPerWeek
                                             redmineConnections={redmineConnections}
                                             timeEntries={timeEntries}
+                                            onWeekClick={handleWeekClick}
                                         />
                                     </CardContent>
                                 </Card>
@@ -236,6 +259,13 @@ const DashboardPage = () => {
                 </div>
             </div>
 
+            <WeekReviewDialog
+                selectedRange={selectedRange}
+                timeEntries={timeEntries}
+                redmineConnections={redmineConnections}
+                onClose={() => setSelectedRange(null)}
+                onSuccess={mutateTimeEntries}
+            />
         </>
 
     );
