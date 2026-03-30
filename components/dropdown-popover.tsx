@@ -10,6 +10,7 @@ import {
     CommandGroup,
     CommandInput,
     CommandItem,
+    CommandList,
 } from "@/components/ui/command"
 import {
     Popover,
@@ -19,7 +20,6 @@ import {
 import { FormControl } from "@/components/ui/form"
 
 import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface DropdownPopoverProps {
     field: any,
@@ -40,14 +40,15 @@ const DropdownPopover = ({
 
     return (
         <div ref={containerRef} className="w-full col-span-4">
+            <FormControl className="items-end col-span-4 w-full">
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                    <FormControl className="items-end col-span-4 w-full">
                         <Button
+                            type="button"
                             variant="outline"
                             role="combobox"
                             className={cn(
-                                "justify-between h-fit",
+                                "justify-between h-fit w-full",
                                 !field.value && "text-muted-foreground"
                             )}
                         >
@@ -58,7 +59,6 @@ const DropdownPopover = ({
                                 : "Select an option"}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
-                    </FormControl>
                 </PopoverTrigger>
                 <PopoverContent
                     className="p-0 col-span-4 w-full"
@@ -69,15 +69,15 @@ const DropdownPopover = ({
                 >
                     <Command>
                         <CommandInput placeholder="Search options..." />
-                        <CommandEmpty>No option found.</CommandEmpty>
-                        <ScrollArea className='overflow-auto max-h-screen'>
+                        <CommandList className="max-h-[200px] overflow-y-auto">
+                            <CommandEmpty>No option found.</CommandEmpty>
                             <CommandGroup>
                                 {options?.map((option) => (
                                     <CommandItem
                                         value={option.name}
                                         key={option.id}
                                         onSelect={(currentValue) => {
-                                            onSelectFunc(currentValue);
+                                            onSelectFunc(currentValue.toLowerCase());
                                             setOpen(false)
                                         }}
                                     >
@@ -93,10 +93,11 @@ const DropdownPopover = ({
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
-                        </ScrollArea>
+                        </CommandList>
                     </Command>
                 </PopoverContent>
             </Popover>
+            </FormControl>
         </div>
     );
 }
